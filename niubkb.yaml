@@ -1,0 +1,101 @@
+points:
+  zones:
+    matrix:
+      columns:
+        pinky:
+          key:
+            column_net: P16
+        ring:
+          key:
+            stagger: 3
+            column_net: P9
+        middle:
+          key:
+            stagger: 5
+            column_net: P8
+        index:
+          key:
+            stagger: -5
+            column_net: P7
+        inner:
+          key:
+            stagger: -6
+            column_net: P6
+        thumb:
+          key:
+            skip: true
+            stagger: -13
+            column_net: P10
+          rows:
+            home.skip: false
+      rows:
+        bottom:
+          row_net: P5
+        home:
+          row_net: P4
+        top:
+          row_net: P3
+        num:
+          row_net: P2
+
+  rotate: -10
+  # mirror:
+  #   ref: matrix_thumb_home
+  #  distance: 50
+
+outlines:
+  raw:
+    - what: rectangle
+      where: true
+      size: [1.5cx, 1.5cy]
+  controller_mount:
+    - what: rectangle
+      where:
+        ref: matrix_thumb_home
+        shift: [0.1cx, 1.6cy]
+      size: [1.3cx, 2.2cy]
+      fillet: 1.0
+  pcb_cutout:
+    - what: outline
+      name: raw
+      fillet: 1.0
+    - what: outline
+      name: controller_mount
+      operation: add
+
+pcbs:
+  niu_left:
+    outlines:
+      main:
+        outline: pcb_cutout
+    footprints:
+      keys:
+        what: mx
+        where: true
+        params:
+          from: "{{colrow}}"
+          to: "{{column_net}}"
+          keycaps: true
+      mcu:
+        what: promicro
+        where:
+          ref: matrix_thumb_home
+          shift: [3.8, 1.6cy]
+          rotate: -90
+        params:
+          orientation: up
+      diode:
+        what: diode
+        where: true
+        adjust:
+          rotate: 0
+          shift: [ 0, -4.5 ]
+        params:
+          from: "{{colrow}}"
+          to: "{{row_net}}"
+
+cases:
+  niu_case:
+    - what: outline
+      name: pcb_cutout
+      extrude: 2
