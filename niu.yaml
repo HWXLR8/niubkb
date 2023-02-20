@@ -41,26 +41,35 @@ points:
   rotate: -10
   # mirror:
   #   ref: matrix_thumb_home
-  #  distance: 50
+  #   distance: 50
 
 outlines:
   raw:
     - what: rectangle
       where: true
-      size: [1.5cx, 1.5cy]
-  controller_mount:
+      size: [1.2cx, 1.2cy]
+  tab_top_right:
     - what: rectangle
       where:
         ref: matrix_thumb_home
         shift: [0.1cx, 1.6cy]
-      size: [1.3cx, 2.2cy]
+      size: [35, 2.1cy]
+      fillet: 1.0
+  tab_bottom_right:
+    - what: rectangle
+      where:
+        ref: matrix_thumb_home
+        shift: [0.1cx, 0.147cy]
+      size: [35, 2.2cy]
       fillet: 1.0
   pcb_cutout:
     - what: outline
       name: raw
       fillet: 1.0
     - what: outline
-      name: controller_mount
+      name: tab_top_right
+    - what: outline
+      name: tab_bottom_right
       operation: add
 
 pcbs:
@@ -76,12 +85,13 @@ pcbs:
           from: "{{colrow}}"
           to: "{{column_net}}"
           keycaps: true
+          reverse: true
       mcu:
         what: promicro
         where:
           ref: matrix_thumb_home
-          shift: [3.8, 1.6cy]
-          rotate: -90
+          shift: [0.7, 27.2]
+          rotate: 270
         params:
           orientation: up
       diode:
@@ -89,10 +99,22 @@ pcbs:
         where: true
         adjust:
           rotate: 0
-          shift: [ 0, -4.5 ]
+          shift: [0, -4.5]
         params:
           from: "{{colrow}}"
           to: "{{row_net}}"
+      trrs:
+        what: trrs
+        where:
+          ref: matrix_thumb_home
+          shift: [16.5, 44]
+        params:
+          A: GND
+          B: GND
+          C: P1
+          D: VCC
+          reverse: true
+          symmetric: true
 
 cases:
   niu_case:
