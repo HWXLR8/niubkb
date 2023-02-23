@@ -41,7 +41,6 @@ points:
         num:
           row_net: P2
 
-  rotate: -10
   # mirror:
   #   ref: matrix_thumb_home
   #   distance: 50
@@ -51,30 +50,28 @@ outlines:
     - what: rectangle
       where: true
       size: [1.2cx, 1.2cy]
-  tab1: # top half of mcu/trrs/mounting holes
+  tab1: # top half of tab for mcu/trrs/mounting holes
     - what: rectangle
       where:
         ref: matrix_thumb_home
         shift: [0.1cx, 1.6cy]
       size: [35, 2.1cy]
-  tab2: # bottom half of mcu/trrs/mounting holes
+  tab2: # bottom half of tab for mcu/trrs/mounting holes
     - what: rectangle
       where:
         ref: matrix_thumb_home
         shift: [0.1cx, 0.147cy]
       size: [35, 2.2cy]
-  tab3: # bottom mounting hole
+  tab3: # tab for bottom mounting hole
     - what: rectangle
       where:
-        shift: [36, -6.582]
-        rotate: -10
+        shift: [36, -0.2]
       size: [70, 20]
-  tab4: # top right mounting hole
+  tab4: # tab for top right mounting hole
     - what: rectangle
       where:
-        shift: [70, 56]
-        rotate: -10
-      size: [55.18, 15.85]
+        shift: [59.30, 67.279]
+      size: [55, 15.85]
 
 
   # mounting holes
@@ -82,22 +79,22 @@ outlines:
     - what: circle
       radius: 3.2/2
       where:
-        shift: [106.13, -27.54]
+        shift: [109.474, -8.89]
   hole2: # bottom right
     - what: circle
       radius: 3.2/2
       where:
-        shift: [112.78, 9.67]
+        shift: [109.474, 29.718]
   hole3: # bottom
     - what: circle
       radius: 3.2/2
       where:
-        shift: [36.04, -12.36]
+        shift: [38.00, -5.334]
   hole4: # top right
     - what: circle
       radius: 3.2/2
       where:
-        shift: [87.26, 55.06]
+        shift: [76, 69.342]
 
   # pcb outline
   pcb_cutout:
