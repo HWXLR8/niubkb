@@ -145,8 +145,7 @@ pcbs:
       mcu:
         what: promicro
         where:
-          ref: matrix_thumb_home
-          shift: [0.7, 27.2]
+          shift: [95.69, 29.972]
           rotate: 270
         params:
           orientation: up
@@ -162,8 +161,7 @@ pcbs:
       trrs:
         what: trrs
         where:
-          ref: matrix_thumb_home
-          shift: [16.5, 44]
+          shift: [111.774, 47.276]
         params:
           A: GND
           B: GND
