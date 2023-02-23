@@ -27,7 +27,7 @@ points:
         thumb:
           key:
             skip: true
-            stagger: -13
+            stagger: -22
             column_net: P10
           rows:
             home.skip: false
@@ -50,18 +50,16 @@ outlines:
     - what: rectangle
       where: true
       size: [1.2cx, 1.2cy]
-  tab1: # top half of tab for mcu/trrs/mounting holes
+  tab1: # bottom half of tab for mcu/trrs/mounting holes
     - what: rectangle
       where:
-        ref: matrix_thumb_home
-        shift: [0.1cx, 1.6cy]
-      size: [35, 2.1cy]
-  tab2: # bottom half of tab for mcu/trrs/mounting holes
+        shift: [104.5, 6.3]
+      size: [20, 45]
+  tab2: # top half of tab for mcu/trrs/mounting holes
     - what: rectangle
       where:
-        ref: matrix_thumb_home
-        shift: [0.1cx, 0.147cy]
-      size: [35, 2.2cy]
+        shift: [97, 16.3]
+      size: [35, 45]
   tab3: # tab for bottom mounting hole
     - what: rectangle
       where:
@@ -72,6 +70,16 @@ outlines:
       where:
         shift: [59.30, 67.279]
       size: [55, 15.85]
+  tab5: # tab for left mounting holes
+    - what: rectangle
+      where:
+        shift: [5, 27.3]
+      size: [50, 75]
+  tab6: # tab for top left mounting holes
+    - what: rectangle
+      where:
+        shift: [10, 60.2]
+      size: [60, 30]
 
 
   # mounting holes
@@ -79,12 +87,12 @@ outlines:
     - what: circle
       radius: 3.2/2
       where:
-        shift: [109.474, -8.89]
-  hole2: # bottom right
+        shift: [109.474, -11.43]
+  hole2: # mid right
     - what: circle
       radius: 3.2/2
       where:
-        shift: [109.474, 29.718]
+        shift: [109.474, 20.574]
   hole3: # bottom
     - what: circle
       radius: 3.2/2
@@ -95,6 +103,21 @@ outlines:
       radius: 3.2/2
       where:
         shift: [76, 69.342]
+  hole5: # bottom left
+    - what: circle
+      radius: 3.2/2
+      where:
+        shift: [-14.8, -5.334]
+  hole6: # mid left
+    - what: circle
+      radius: 3.2/2
+      where:
+        shift: [-14.8, 38]
+  hole7: # top left
+    - what: circle
+      radius: 3.2/2
+      where:
+        shift: [0, 71.2]
 
   # pcb outline
   pcb_cutout:
@@ -113,6 +136,12 @@ outlines:
     - what: outline
       name: tab4
       operation: add
+    - what: outline
+      name: tab5
+      operation: add
+    - what: outline
+      name: tab6
+      operation: add
 
     # mounting holes
     - what: outline
@@ -126,6 +155,15 @@ outlines:
       operation: subtract
     - what: outline
       name: hole4
+      operation: subtract
+    - what: outline
+      name: hole5
+      operation: subtract
+    - what: outline
+      name: hole6
+      operation: subtract
+    - what: outline
+      name: hole7
       operation: subtract
 
 pcbs:
@@ -145,7 +183,7 @@ pcbs:
       mcu:
         what: promicro
         where:
-          shift: [95.69, 29.972]
+          shift: [95.69, 20.32]
           rotate: 270
         params:
           orientation: up
@@ -161,7 +199,7 @@ pcbs:
       trrs:
         what: trrs
         where:
-          shift: [111.774, 47.276]
+          shift: [111.774, 37.624]
         params:
           A: GND
           B: GND
