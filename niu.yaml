@@ -1,3 +1,6 @@
+units:
+  mm: 1
+
 points:
   zones:
     matrix:
@@ -48,29 +51,85 @@ outlines:
     - what: rectangle
       where: true
       size: [1.2cx, 1.2cy]
-  tab_top_right:
+  tab1: # top half of mcu/trrs/mounting holes
     - what: rectangle
       where:
         ref: matrix_thumb_home
         shift: [0.1cx, 1.6cy]
       size: [35, 2.1cy]
-      fillet: 1.0
-  tab_bottom_right:
+  tab2: # bottom half of mcu/trrs/mounting holes
     - what: rectangle
       where:
         ref: matrix_thumb_home
         shift: [0.1cx, 0.147cy]
       size: [35, 2.2cy]
-      fillet: 1.0
+  tab3: # bottom mounting hole
+    - what: rectangle
+      where:
+        shift: [36, -6.582]
+        rotate: -10
+      size: [70, 20]
+  tab4: # top right mounting hole
+    - what: rectangle
+      where:
+        shift: [70, 56]
+        rotate: -10
+      size: [55.18, 15.85]
+
+
+  # mounting holes
+  hole1: # bottom right
+    - what: circle
+      radius: 3.2/2
+      where:
+        shift: [106.13, -27.54]
+  hole2: # bottom right
+    - what: circle
+      radius: 3.2/2
+      where:
+        shift: [112.78, 9.67]
+  hole3: # bottom
+    - what: circle
+      radius: 3.2/2
+      where:
+        shift: [36.04, -12.36]
+  hole4: # top right
+    - what: circle
+      radius: 3.2/2
+      where:
+        shift: [87.26, 55.06]
+
+  # pcb outline
   pcb_cutout:
     - what: outline
       name: raw
-      fillet: 1.0
+
+    # tabs
     - what: outline
-      name: tab_top_right
+      name: tab1
     - what: outline
-      name: tab_bottom_right
+      name: tab2
       operation: add
+    - what: outline
+      name: tab3
+      operation: add
+    - what: outline
+      name: tab4
+      operation: add
+
+    # mounting holes
+    - what: outline
+      name: hole1
+      operation: subtract
+    - what: outline
+      name: hole2
+      operation: subtract
+    - what: outline
+      name: hole3
+      operation: subtract
+    - what: outline
+      name: hole4
+      operation: subtract
 
 pcbs:
   niu:
