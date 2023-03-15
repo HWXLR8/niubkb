@@ -80,6 +80,11 @@ outlines:
       where:
         shift: [10, 60.2]
       size: [60, 30]
+  tab7: # tab for removing bottom jagged section
+    - what: rectangle
+      where:
+        shift: [75.2, -6.2]
+      size: [20, 20]
 
 
   # mounting holes
@@ -141,6 +146,9 @@ outlines:
       operation: add
     - what: outline
       name: tab6
+      operation: add
+    - what: outline
+      name: tab7
       operation: add
 
     # mounting holes
