@@ -28,12 +28,6 @@
   this software.
 */
 
-/** \file
- *
- *  Main source file for the Keyboard demo. This file contains the main tasks of
- *  the demo and is responsible for the initial application hardware configuration.
- */
-
 #include "Keyboard.h"
 
 /** Buffer to hold the previously generated Keyboard HID report, for comparison purposes inside the HID class driver. */
@@ -44,80 +38,39 @@ static uint8_t PrevKeyboardHIDReportBuffer[sizeof(USB_KeyboardReport_Data_t)];
  *  within a device can be differentiated from one another.
  */
 USB_ClassInfo_HID_Device_t Keyboard_HID_Interface =
-	{
-		.Config =
-			{
-				.InterfaceNumber              = INTERFACE_ID_Keyboard,
-				.ReportINEndpoint             =
-					{
-						.Address              = KEYBOARD_EPADDR,
-						.Size                 = KEYBOARD_EPSIZE,
-						.Banks                = 1,
-					},
-				.PrevReportINBuffer           = PrevKeyboardHIDReportBuffer,
-				.PrevReportINBufferSize       = sizeof(PrevKeyboardHIDReportBuffer),
-			},
-	};
+  {
+    .Config = {
+      .InterfaceNumber = INTERFACE_ID_Keyboard,
+      .ReportINEndpoint = {
+	.Address = KEYBOARD_EPADDR,
+	.Size = KEYBOARD_EPSIZE,
+	.Banks = 1,
+      },
+      .PrevReportINBuffer = PrevKeyboardHIDReportBuffer,
+      .PrevReportINBufferSize = sizeof(PrevKeyboardHIDReportBuffer),
+    },
+  };
 
 
-/** Main program entry point. This routine contains the overall program flow, including initial
- *  setup of all components and the main program loop.
- */
 int main(void)
 {
 	SetupHardware();
 
 	GlobalInterruptEnable();
 
-	// rows
-	pin_t d1;
-	d1.port = &PORTD;
-	d1.pin = &PIND;
-	d1.pin_num = 1;
-	pin_t d0;
-	d0.port = &PORTD;
-	d0.pin = &PIND;
-	d0.pin_num = 0;
-	pin_t d4;
-	d4.port = &PORTD;
-	d4.pin = &PIND;
-	d4.pin_num = 4;
-	pin_t c6;
-	c6.port = &PORTC;
-	c6.pin = &PINC;
-	c6.pin_num = 6;
-	// cols
-	pin_t b2;
-	b2.port = &PORTB;
-	b2.pin = &PINB;
-	b2.pin_num = 2;
-	pin_t b5;
-	b5.port = &PORTB;
-	b5.pin = &PINB;
-	b5.pin_num = 5;
-	pin_t b4;
-	b4.port = &PORTB;
-	b4.pin = &PINB;
-	b4.pin_num = 4;
-	pin_t e6;
-	e6.port = &PORTE;
-	e6.pin = &PINE;
-	e6.pin_num = 6;
-	pin_t d7;
-	d7.port = &PORTD;
-	d7.pin = &PIND;
-	d7.pin_num = 7;
-	pin_t b6;
-	b6.port = &PORTB;
-	b6.pin = &PINB;
-	b6.pin_num = 6;
-
-	matrix_t matrix = {
-	  4,
-	  6,
-	  {d1, d0, d4, c6},
-	  {b2, b5, b4, e6, d7, b6}
-	};
+	// setup matrix
+	uint8_t num_rows = 4;
+	uint8_t num_cols = 6;
+	matrix.num_rows = num_rows;
+	matrix.num_cols = num_cols;
+	pin_t rows[4] = {d1, d0, d4, c6};
+	pin_t cols[6] =	{b2, b5, b4, e6, d7, b6};
+	for (int i = 0; i < num_rows; ++i) {
+	  matrix.rows[i] = rows[i];
+	}
+	for (int i = 0; i < num_cols; ++i) {
+	  matrix.cols[i] = cols[i];
+	}
 
 	// set all rows at outputs
 	DDRD |= _BV(1);
@@ -139,21 +92,15 @@ int main(void)
 	for (uint8_t i = 0; i < matrix.num_cols; ++i) {
 	  setPinHigh(matrix.cols[i]);
 	}
-	/* PORTB |= _BV(2); // B2 */
-	/* PORTB |= _BV(5); // B5 */
-	/* PORTB |= _BV(4); // B4 */
-	/* PORTE |= _BV(6); // E6 */
-	/* PORTD |= _BV(7); // D7 */
-	/* PORTB |= _BV(6); // B6 */
 
-	for (;;)
-	{
-	  setPinLow(d1);
-
-	  HID_Device_USBTask(&Keyboard_HID_Interface);
-	  USB_USBTask();
-
-	  setPinHigh(d1);
+	for (;;) {
+	  for (uint8_t i = 0; i < matrix.num_rows; ++i) {
+	    setPinLow(matrix.rows[i]);
+	    matrix.active_col = i;
+	    HID_Device_USBTask(&Keyboard_HID_Interface);
+	    USB_USBTask();
+	    setPinHigh(matrix.rows[i]);
+	  }
 	}
 }
 
@@ -230,27 +177,13 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 	USB_KeyboardReport_Data_t* KeyboardReport = (USB_KeyboardReport_Data_t*)ReportData;
 
 	uint8_t UsedKeyCodes = 0;
-
-	// check if column 1 is low
-	if (!(PINB & _BV(2))) {
-	  KeyboardReport->KeyCode[UsedKeyCodes++] = HID_KEYBOARD_SC_Q;
+	uint8_t offset = matrix.active_col * matrix.num_cols;
+	// check columns one at a time to determine which key is pressed
+	for (uint8_t i = 0; i < matrix.num_cols; ++i) {
+	  if (isPinLow(matrix.cols[i])) {
+	    KeyboardReport->KeyCode[UsedKeyCodes++] = layout[i+offset];
+	  }
 	}
-
-	/* if (JoyStatus_LCL & JOY_UP) */
-	/*   KeyboardReport->KeyCode[UsedKeyCodes++] = HID_KEYBOARD_SC_A; */
-	/* else if (JoyStatus_LCL & JOY_DOWN) */
-	/*   KeyboardReport->KeyCode[UsedKeyCodes++] = HID_KEYBOARD_SC_B; */
-
-	/* if (JoyStatus_LCL & JOY_LEFT) */
-	/*   KeyboardReport->KeyCode[UsedKeyCodes++] = HID_KEYBOARD_SC_C; */
-	/* else if (JoyStatus_LCL & JOY_RIGHT) */
-	/*   KeyboardReport->KeyCode[UsedKeyCodes++] = HID_KEYBOARD_SC_D; */
-
-	/* if (JoyStatus_LCL & JOY_PRESS) */
-	/*   KeyboardReport->KeyCode[UsedKeyCodes++] = HID_KEYBOARD_SC_E; */
-
-	/* if (ButtonStatus_LCL & BUTTONS_BUTTON1) */
-	/*   KeyboardReport->KeyCode[UsedKeyCodes++] = HID_KEYBOARD_SC_F; */
 
 	/* if (UsedKeyCodes) */
 	/*   KeyboardReport->Modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT; */

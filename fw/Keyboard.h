@@ -42,19 +42,25 @@
 #include <LUFA/Drivers/USB/USB.h>
 #include <LUFA/Platform/Platform.h>
 
-
-typedef struct {
-  volatile uint8_t* port;
-  volatile uint8_t* pin;
-  uint8_t pin_num;
-} pin_t;
+#include "keys.h"
+#include "pins.h"
 
 typedef struct {
   uint8_t num_rows;
   uint8_t num_cols;
   pin_t rows[16];
   pin_t cols[16];
+  uint8_t active_col;
 } matrix_t;
+
+matrix_t matrix;
+
+uint8_t layout[256] = {
+  K_Q, K_W, K_F, K_P, K_G, K_RESERVED,
+  K_A, K_R, K_S, K_T, K_D, K_RESERVED,
+  K_Z, K_X, K_C, K_V, K_B, K_LEFT_CONTROL,
+  K_ESCAPE, K_TAB, K_LEFT_GUI, K_LEFT_SHIFT, K_BACKSPACE, K_RESERVED
+};
 
 void SetupHardware(void);
 
