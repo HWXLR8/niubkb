@@ -1,4 +1,4 @@
-ergogen_bin=node_modules/ergogen/src/cli.js
+ergogen_bin=ergogen
 output_dir=out
 input=niu.yaml
 
