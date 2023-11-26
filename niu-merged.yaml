@@ -41,7 +41,7 @@ points:
         num:
           row_net: P2
 
-  rotate: -5
+  rotate: -6
   mirror:
     ref: matrix_thumb_home
     distance: 30
@@ -51,71 +51,10 @@ outlines:
     - what: rectangle
       where: true
       size: [1.2cx, 1.2cy]
-  tab1: # center-top
-    - what: rectangle
-      where:
-        shift: [120, 43.2]
-      size: [150, 35]
-  tab2: # center-bottom
-    - what: rectangle
-      where:
-        shift: [107.51, -24.28]
-      size: [12.29, 20.09]
-  tab3: # top-left
-    - what: rectangle
-      where:
-        shift: [24.89, 45]
-        rotate: -5
-      size: [55, 53.12]
-  tab4: # top-right
-    - what: rectangle
-      where:
-        shift: [189.9, 45]
-        rotate: 5
-      size: [55.5, 53]
-  tab5: # bottom-left
-    - what: rectangle
-      where:
-        shift: [36, -10]
-        rotate: -5
-      size: [96, 25.21]
-  tab6: # bottom-right
-    - what: rectangle
-      where:
-        shift: [179.02, -10]
-        rotate: 5
-      size: [96, 25.21]
-
-  # mounting holes
-  hole1: # bottom right
-    - what: circle
-      radius: 3.2/2
-      where:
-        shift: [109.474, -11.43]
-
   # pcb outline
   pcb_cutout:
     - what: outline
       name: raw
-
-    # tabs
-    - what: outline
-      name: tab1
-    - what: outline
-      name: tab2
-    - what: outline
-      name: tab3
-    - what: outline
-      name: tab4
-    - what: outline
-      name: tab5
-    - what: outline
-      name: tab6
-
-    # mounting holes
-    - what: outline
-      name: hole1
-      operation: subtract
 
 pcbs:
   niu:
@@ -133,7 +72,7 @@ pcbs:
       mcu:
         what: promicro
         where:
-          shift: [107.5145, 42]
+          shift: [108.8526, 42]
           rotate: 270
         params:
           orientation: up
