@@ -3,3 +3,4 @@ out
 *.bak
 fp-info-cache
 sym-lib-table
+*.kicad_pro
