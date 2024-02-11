@@ -109,7 +109,7 @@ pcbs:
       mcu:
         what: promicro
         where:
-          shift: [108.8526, 42]
+          shift: [110.3886, 42]
           rotate: 270
         params:
           orientation: up
