@@ -1,5 +1,11 @@
 units:
   mm: 1
+  # Proxy Spacing Variables
+  kx: cx
+  ky: cy
+  # Padding Variables
+  px: kx + 2
+  py: ky + 2
 
 points:
   zones:
@@ -51,10 +57,41 @@ outlines:
     - what: rectangle
       where: true
       size: [1.2cx, 1.2cy]
+  board:
+    - what: polygon
+      operation: stack
+      fillet: 2
+      points:
+        - ref: matrix_middle_num
+          shift: [-2.5px + 2, 0.5py]
+        - ref: matrix_middle_num
+          shift: [0.5px,0.5py]
+        - ref: matrix_inner_num
+          shift: [0.5px,0.9py]
+        - ref: mirror_matrix_inner_num
+          shift: [0.5px,0.9py]
+        - ref: mirror_matrix_middle_num
+          shift: [0.5px,0.5py]
+        - ref: mirror_matrix_middle_num
+          shift: [-0.5px,0.5py]
+        - ref: mirror_matrix_middle_num
+          shift: [-2.5px + 2, 0.5py]
+        - ref: mirror_matrix_thumb_bottom
+          shift: [-5.5px + 5,-0.5py]
+        - ref: mirror_matrix_thumb_bottom
+          shift: [-0.5px,-0.5py]
+        - ref: mirror_matrix_thumb_bottom
+          shift: [0.5px,-0.5py]
+        - ref: matrix_thumb_bottom
+          shift: [0.5px,-0.5py]
+        - ref: matrix_thumb_bottom
+          shift: [-0.5px,-0.5py]
+        - ref: matrix_thumb_bottom
+          shift: [-5.5px + 5,-0.5py]
   # pcb outline
   pcb_cutout:
     - what: outline
-      name: raw
+      name: board
 
 pcbs:
   niu:
