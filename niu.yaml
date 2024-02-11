@@ -27,10 +27,10 @@ points:
         thumb:
           key:
             skip: true
-            stagger: -22
+            stagger: -7
             column_net: P10
           rows:
-            home.skip: false
+            bottom.skip: false
       rows:
         bottom:
           row_net: P5
@@ -41,7 +41,7 @@ points:
         num:
           row_net: P2
 
-  rotate: -6
+  rotate: -7
   mirror:
     ref: matrix_thumb_home
     distance: 30
