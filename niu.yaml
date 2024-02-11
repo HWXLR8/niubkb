@@ -67,13 +67,17 @@ outlines:
         - ref: matrix_middle_num
           shift: [0.5px,0.5py]
         - ref: matrix_inner_num
-          shift: [0.5px,0.9py]
+          shift: [0.5px + 7.53, 0.9py]
+        - ref: matrix_inner_num
+          shift: [0.5px + 7.53, 0.4py]
         - ref: mirror_matrix_inner_num
-          shift: [0.5px,0.9py]
+          shift: [0.5px + 7.53, 0.4py]
+        - ref: mirror_matrix_inner_num
+          shift: [0.5px + 7.53, 0.9py]
         - ref: mirror_matrix_middle_num
-          shift: [0.5px,0.5py]
+          shift: [0.5px, 0.5py]
         - ref: mirror_matrix_middle_num
-          shift: [-0.5px,0.5py]
+          shift: [-0.5px, 0.5py]
         - ref: mirror_matrix_middle_num
           shift: [-2.5px + 2, 0.5py]
         - ref: mirror_matrix_thumb_bottom
@@ -81,11 +85,11 @@ outlines:
         - ref: mirror_matrix_thumb_bottom
           shift: [-0.5px,-0.5py]
         - ref: mirror_matrix_thumb_bottom
-          shift: [0.5px,-0.5py]
+          shift: [0.5px, -0.5py]
         - ref: matrix_thumb_bottom
-          shift: [0.5px,-0.5py]
+          shift: [0.5px, -0.5py]
         - ref: matrix_thumb_bottom
-          shift: [-0.5px,-0.5py]
+          shift: [-0.5px, -0.5py]
         - ref: matrix_thumb_bottom
           shift: [-5.5px + 5,-0.5py]
   # pcb outline
@@ -109,7 +113,7 @@ pcbs:
       mcu:
         what: promicro
         where:
-          shift: [110.3886, 42]
+          shift: [110.3886, 31]
           rotate: 270
         params:
           orientation: up
