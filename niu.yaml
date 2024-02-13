@@ -67,9 +67,9 @@ outlines:
         - ref: matrix_inner_num
           shift: [0.5px + 7.53, 0.9py]
         - ref: matrix_inner_num
-          shift: [0.5px + 7.53, 0.4py]
+          shift: [0.5px + 7.53, 0.1py]
         - ref: mirror_matrix_inner_num
-          shift: [0.5px + 7.53, 0.4py]
+          shift: [0.5px + 7.53, 0.1py]
         - ref: mirror_matrix_inner_num
           shift: [0.5px + 7.53, 0.9py]
         - ref: mirror_matrix_middle_num
@@ -167,7 +167,7 @@ pcbs:
       mcu:
         what: promicro
         where:
-          shift: [110.3886, 31]
+          shift: [110.3886, 26]
           rotate: 270
         params:
           orientation: up
