@@ -1,9 +1,7 @@
 units:
   mm: 1
-  # Proxy Spacing Variables
   kx: cx
   ky: cy
-  # Padding Variables
   px: kx + 2
   py: ky + 2
 
@@ -92,7 +90,6 @@ outlines:
           shift: [-0.5px, -0.5py]
         - ref: matrix_thumb_bottom
           shift: [-5.5px + 5,-0.5py]
-  # pcb outline
   pcb_cutout:
     - what: outline
       name: board
@@ -103,6 +100,63 @@ pcbs:
       main:
         outline: pcb_cutout
     footprints:
+      # mounting holes
+      hole1:
+        what: m3
+        where:
+          ref: [matrix_pinky_num]
+          shift: [-5.13, 13.47]
+      hole2:
+        what: m3
+        where:
+          ref: [matrix_inner_num]
+          shift: [-4.7, 14]
+      hole3:
+        what: m3
+        where:
+          ref: [matrix_inner_home]
+          shift: [14.13, 9.47]
+      hole4:
+        what: m3
+        where:
+          ref: [mirror_matrix_inner_home]
+          shift: [14.13, 9.47]
+      hole5:
+        what: m3
+        where:
+          ref: [mirror_matrix_inner_num]
+          shift: [-4.7, 14]
+      hole6:
+        what: m3
+        where:
+          ref: [mirror_matrix_pinky_num]
+          shift: [-5.13, 13.47]
+      hole7:
+        what: m3
+        where:
+          ref: [mirror_matrix_pinky_bottom]
+          shift: [-5.13, -14.45]
+      hole8:
+        what: m3
+        where:
+          ref: [mirror_matrix_index_bottom]
+          shift: [0, -17.45]
+      hole9:
+        what: m3
+        where:
+          ref.aggregate.parts: [matrix_thumb_bottom, mirror_matrix_thumb_bottom]
+          shift: [0, -5]
+      hole10:
+        what: m3
+        where:
+          ref: [matrix_index_bottom]
+          shift: [0, -17.45]
+      hole11:
+        what: m3
+        where:
+          ref: [matrix_pinky_bottom]
+          shift: [-5.13, -14.45]
+
       keys:
         what: mx
         where: true
