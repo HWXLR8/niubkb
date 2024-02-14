@@ -11,39 +11,45 @@ points:
       columns:
         pinky:
           key:
-            column_net: P16
+            column_net: P2
+            mirror.column_net: P21
         ring:
           key:
             stagger: 3
-            column_net: P9
+            column_net: P3
+            mirror.column_net: P20
         middle:
           key:
             stagger: 5
-            column_net: P8
+            column_net: P4
+            mirror.column_net: P19
         index:
           key:
             stagger: -5
-            column_net: P7
+            column_net: P5
+            mirror.column_net: P18
         inner:
           key:
             stagger: -6
             column_net: P6
+            mirror.column_net: P15
         thumb:
           key:
             skip: true
             stagger: -7
-            column_net: P10
+            column_net: P9
+            mirror.column_net: P10
           rows:
             bottom.skip: false
       rows:
         bottom:
-          row_net: P5
+          row_net: P7
         home:
-          row_net: P4
+          row_net: P8
         top:
-          row_net: P3
+          row_net: P16
         num:
-          row_net: P2
+          row_net: P14
 
   rotate: -7
   mirror:
