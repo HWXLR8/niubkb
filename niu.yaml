@@ -15,7 +15,7 @@ points:
             mirror.column_net: F4
         ring:
           key:
-            stagger: 3
+            stagger: 5
             column_net: D0
             mirror.column_net: F5
         middle:
@@ -40,20 +40,21 @@ points:
             column_net: B5
             mirror.column_net: B6
           rows:
+            lower.skip: false
             bottom.skip: false
       rows:
         bottom:
           row_net: E6
-        home:
+        lower:
           row_net: B4
-        top:
+        home:
           row_net: B2
-        num:
+        top:
           row_net: B3
 
   rotate: -7
   mirror:
-    ref: matrix_thumb_home
+    ref: matrix_thumb_lower
     distance: 30
 
 outlines:
@@ -64,21 +65,23 @@ outlines:
   board:
     - what: polygon
       operation: stack
-      fillet: 2
+      # fillet: 2
       points:
-        - ref: matrix_inner_num
-        - ref: matrix_inner_num
-          shift: [0.5px + 7.53, 0.9py]
-        - ref: matrix_inner_num
+        - ref: matrix_inner_top
+        - ref: matrix_inner_top
+          shift: [10.8, 10.2]
+        - ref: matrix_inner_top
           shift: [0.5px + 7.53, 0.1py]
-        - ref: mirror_matrix_inner_num
+        - ref: mirror_matrix_inner_top
           shift: [0.5px + 7.53, 0.1py]
-        - ref: mirror_matrix_inner_num
-          shift: [0.5px + 7.53, 0.9py]
-        - ref: mirror_matrix_inner_num
+        - ref: mirror_matrix_inner_top
+          shift: [10.8, 10.2]
+        - ref: mirror_matrix_inner_top
         - ref: mirror_matrix_inner_bottom
         - ref: mirror_matrix_thumb_bottom
+          shift: [0, -5]
         - ref: matrix_thumb_bottom
+          shift: [0, -5]
         - ref: matrix_inner_bottom
   pcb_cutout:
     - what: outline
@@ -92,83 +95,73 @@ pcbs:
       main:
         outline: pcb_cutout
     footprints:
-      # mounting holes
+      # left half
       hole1:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_pinky_num, matrix_pinky_top]
+          ref.aggregate.parts: [matrix_pinky_top, matrix_pinky_home]
       hole2:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_pinky_home, matrix_pinky_bottom]
+          ref.aggregate.parts: [matrix_pinky_lower, matrix_pinky_bottom]
       hole3:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_ring_num, matrix_ring_top]
+          ref.aggregate.parts: [matrix_middle_top, matrix_middle_home]
       hole4:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_ring_home, matrix_ring_bottom]
+          ref.aggregate.parts: [matrix_middle_lower, matrix_middle_bottom]
       hole5:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_middle_num, matrix_middle_top]
+          ref.aggregate.parts: [matrix_inner_top, matrix_inner_home]
       hole6:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_middle_home, matrix_middle_bottom]
+          ref.aggregate.parts: [matrix_inner_lower, matrix_inner_bottom]
+      # right half
       hole7:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_index_num, matrix_index_top]
+          ref.aggregate.parts: [mirror_matrix_pinky_top, mirror_matrix_pinky_home]
       hole8:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_index_home, matrix_index_bottom]
+          ref.aggregate.parts: [mirror_matrix_pinky_lower, mirror_matrix_pinky_bottom]
       hole9:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_inner_num, matrix_inner_top]
+          ref.aggregate.parts: [mirror_matrix_middle_top, mirror_matrix_middle_home]
       hole10:
         what: m2
         where:
-          ref.aggregate.parts: [matrix_inner_home, matrix_inner_bottom]
-
-      # hole5:
-      #   what: m3
-      #   where:
-      #     ref: [mirror_matrix_inner_num]
-      #     shift: [-4.7, 14]
-      # hole6:
-      #   what: m3
-      #   where:
-      #     ref: [mirror_matrix_pinky_num]
-      #     shift: [-5.13, 13.47]
-      # hole7:
-      #   what: m3
-      #   where:
-      #     ref: [mirror_matrix_pinky_bottom]
-      #     shift: [-5.13, -14.45]
-      # hole8:
-      #   what: m3
-      #   where:
-      #     ref: [mirror_matrix_index_bottom]
-      #     shift: [0, -17.45]
-      # hole9:
-      #   what: m3
-      #   where:
-      #     ref.aggregate.parts: [matrix_thumb_bottom, mirror_matrix_thumb_bottom]
-      #     shift: [0, -5]
-      # hole10:
-      #   what: m3
-      #   where:
-      #     ref: [matrix_index_bottom]
-      #     shift: [0, -17.45]
-      # hole11:
-      #   what: m3
-      #   where:
-      #     ref: [matrix_pinky_bottom]
-      #     shift: [-5.13, -14.45]
+          ref.aggregate.parts: [mirror_matrix_middle_lower, mirror_matrix_middle_bottom]
+      hole11:
+        what: m2
+        where:
+          ref.aggregate.parts: [mirror_matrix_inner_top, mirror_matrix_inner_home]
+      hole12:
+        what: m2
+        where:
+          ref.aggregate.parts: [mirror_matrix_inner_lower, mirror_matrix_inner_bottom]
+      # center bottom
+      hole13:
+        what: m3
+        where:
+          ref.aggregate.parts: [matrix_thumb_bottom, mirror_matrix_thumb_bottom]
+      # center left
+      hole14:
+        what: m3
+        where:
+          ref: [matrix_inner_home]
+          shift: [14.13, 0]
+      # center right
+      hole15:
+        what: m3
+        where:
+          ref: [mirror_matrix_inner_home]
+          shift: [14.13, 0]
 
       keys:
         what: mx
@@ -180,7 +173,7 @@ pcbs:
       mcu:
         what: promicro
         where:
-          shift: [110.3886, 26]
+          ref.aggregate.parts: [matrix_inner_home, mirror_matrix_inner_home]
           rotate: 270
         params:
           orientation: up
