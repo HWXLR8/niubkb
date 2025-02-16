@@ -65,17 +65,17 @@ outlines:
   board:
     - what: polygon
       operation: stack
-      # fillet: 2
+      fillet: 2
       points:
         - ref: matrix_inner_top
         - ref: matrix_inner_top
-          shift: [10.8, 10.2]
+          shift: [8.8, 8.2]
         - ref: matrix_inner_top
           shift: [0.5px + 7.53, 0.1py]
         - ref: mirror_matrix_inner_top
           shift: [0.5px + 7.53, 0.1py]
         - ref: mirror_matrix_inner_top
-          shift: [10.8, 10.2]
+          shift: [8.8, 8.2]
         - ref: mirror_matrix_inner_top
         - ref: mirror_matrix_inner_bottom
         - ref: mirror_matrix_thumb_bottom
@@ -86,6 +86,7 @@ outlines:
   pcb_cutout:
     - what: outline
       name: raw
+      fillet: 2
     - operation: add
       name: board
 

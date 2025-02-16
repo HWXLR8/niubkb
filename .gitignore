@@ -4,3 +4,5 @@ out
 fp-info-cache
 sym-lib-table
 *.kicad_pro
+*-backups
+gerber*
