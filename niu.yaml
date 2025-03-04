@@ -38,10 +38,12 @@ points:
             skip: true
             stagger: -7
             column_net: B5
-            mirror.column_net: B6
+            mirror.column_net: B5
           rows:
             lower.skip: false
             bottom.skip: false
+            lower.mirror.row_net: B3
+            bottom.mirror.row_net: B2
       rows:
         bottom:
           row_net: E6
@@ -69,14 +71,29 @@ outlines:
       points:
         - ref: matrix_inner_top
         - ref: matrix_inner_top
-          shift: [10.8, 10.2]
+          shift: [8.8, 8.2]
         - ref: matrix_inner_top
           shift: [0.5px + 7.53, 0.1py]
         - ref: mirror_matrix_inner_top
           shift: [0.5px + 7.53, 0.1py]
         - ref: mirror_matrix_inner_top
-          shift: [10.8, 10.2]
+          shift: [8.8, 8.2]
         - ref: mirror_matrix_inner_top
+
+        # trace around ec11
+        # connection back to main pcb
+        - ref: mirror_matrix_ring_top
+          shift: [-9.1, 8]
+        # left corner of encoder
+        - ref: mirror_matrix_pinky_top
+          shift: [10, 26]
+        # top right corner
+        - ref: mirror_matrix_pinky_top
+          shift: [-10.8, 26]
+        # extension of right wall
+        - ref: mirror_matrix_pinky_top
+          shift: [-10.8, 0]
+
         - ref: mirror_matrix_inner_bottom
         - ref: mirror_matrix_thumb_bottom
           shift: [0, -5]
@@ -86,6 +103,7 @@ outlines:
   pcb_cutout:
     - what: outline
       name: raw
+      fillet: 2
     - operation: add
       name: board
 
@@ -162,6 +180,12 @@ pcbs:
         where:
           ref: [mirror_matrix_inner_home]
           shift: [14.13, 0]
+      # encoder support post
+      hole16:
+        what: m2
+        where:
+          ref: mirror_matrix_pinky_top
+          shift: [-1, 18]
 
       keys:
         what: mx
@@ -186,6 +210,19 @@ pcbs:
         params:
           from: "{{colrow}}"
           to: "{{row_net}}"
+      rotary:
+        what: ec11
+        where:
+          ref: mirror_matrix_pinky_top
+          shift: [-1, 18]
+          rotate: 180
+        params:
+          from: B6
+          to: GND
+          A: D3
+          B: D2
+          C: GND
+
 
 cases:
   niu_case:
