@@ -1,0 +1,326 @@
+meta:
+  engine: 4.1.0
+
+units:
+  mcu_x: 105.82
+  mcu_y: 53.1
+  enc_x: 115.07
+  enc_y: 41.06
+  trrs_x: 125.48
+  trrs_y: 26.86
+
+
+points:
+  zones:
+    matrix:
+      columns:
+        outer:
+          key:
+            column_net: P21
+        pinky:
+          key:
+            column_net: P4
+        ring:
+          key:
+            stagger: 5
+            column_net: P20
+        middle:
+          key:
+            stagger: 5
+            column_net: P5
+        index:
+          key:
+            stagger: -5
+            column_net: P19
+        inner:
+          key:
+            stagger: -6
+            column_net: P6
+        thumb:
+          key:
+            skip: true
+            stagger: -7
+            column_net: P18
+          rows:
+            lower.skip: false
+            bottom.skip: false
+      rows:
+        bottom:
+          row_net: P10
+        lower:
+          row_net: P9
+        home:
+          row_net: P8
+        top:
+          row_net: P7
+
+outlines:
+  pcb_cutout:
+    - what: rectangle
+      where:
+        ref.aggregate.parts: [matrix_outer_bottom, matrix_thumb_bottom]
+        shift: [0, 33.5]
+      size: [137, 95]
+      fillet: 2
+
+  plate_cutout:
+    # start from the same outside perimeter
+    - what: outline
+      name: pcb_cutout
+
+    # switch cutouts
+    - what: rectangle
+      where: true
+      size: [14, 14]     # common starting point; adjust as needed for your switches/plate fit
+      operation: subtract
+
+    # encoder shaft hole
+    - what: rectangle
+      where: { shift: [enc_x, enc_y] }
+      size: [13, 13]
+      operation: subtract
+
+    # trrs notch
+    - what: rectangle
+      where: { shift: [119.5, 26.84] }
+      size: [13.84, 9.440]
+      # size: [300, 100]
+      operation: subtract
+
+    # mcu cutout
+    - what: rectangle
+      where: { shift: [115.73, 64.95] }
+      size: [22, 26]
+      operation: subtract
+
+pcbs:
+  niu:
+    template: kicad8
+    outlines:
+      main:
+        outline: pcb_cutout
+
+    footprints:
+      keys:
+        what: ergogen-footprints/switch_choc_v1_v2
+        where: true
+        params:
+          from: "{{colrow}}"
+          to: "{{column_net}}"
+          include_keycap: true
+          include_choc_v2_led_cutout_marks: true
+          reversible: true
+
+      mcu:
+        what: ergogen-footprints/mcu_rp2040_zero
+        where:
+          shift: [mcu_x, mcu_y]
+        params:
+          P1: 5V
+          P2: GND
+          P3: 3.3V
+          # ENCODER
+          P13: ENC_B
+          P14: ENC_A
+          P15: ENC_SW
+          # UART
+          P23: TX
+          P22: RX
+
+      trrs:
+        what: ergogen-footprints/trrs_pj320a
+        where:
+          shift: [trrs_x, trrs_y]
+          rotate: 270
+        params:
+          SL: GND
+          TP: 5V
+          R1: TX
+          R2: RX
+          reversible: true
+          # symmetric: true
+
+      encoder:
+        what: ergogen-footprints/rotary_encoder_ec11_ec12
+        where:
+          shift: [enc_x, enc_y]
+          rotate: 270
+        params:
+          A: ENC_A
+          C: ENC_B
+          S1: ENC_SW
+          S2: GND
+
+          include_silkscreen: true
+          reversible: true
+
+      diode:
+        what: ergogen-footprints/diode_tht_sod123
+        where: true
+        adjust:
+          rotate: 0
+          shift: [0, -5]
+        params:
+          from: "{{colrow}}"
+          to: "{{row_net}}"
+          reversible: true
+
+      diode_route:
+        what: ergogen-footprints/utility_router
+        where: true
+        params:
+          route: "f(1.65,5)(3.54,3.11)(3.54,-1.56)(2.61,-2.71)(2.61,-5.285)"
+
+
+      # MOUNTING HOLES
+      top_left:
+        what: ergogen-footprints/mounting_hole_npth
+        where:
+          shift: [0, 71.5]
+        params:
+          hole_size: 3.2
+          hole_drill: 3.2
+      bottom_left:
+        what: ergogen-footprints/mounting_hole_npth
+        where:
+          shift: [0, -13.5]
+        params:
+          hole_size: 3.2
+          hole_drill: 3.2
+      bottom-right:
+        what: ergogen-footprints/mounting_hole_npth
+        where:
+          shift: [95, -14]
+        params:
+          hole_size: 3.2
+          hole_drill: 3.2
+      top-right:
+        what: ergogen-footprints/mounting_hole_npth
+        where:
+          shift: [95, 71.5]
+        params:
+          hole_size: 3.2
+          hole_drill: 3.2
+      mid-right:
+        what: ergogen-footprints/mounting_hole_npth
+        where:
+          shift: [108.73, 26.86]
+        params:
+          hole_size: 3.2
+          hole_drill: 3.2
+
+      # ROUTING
+      row_route:
+        what: ergogen-footprints/utility_router
+        where: "/^matrix_outer_.*$/"
+        params:
+          net: "{{row_net}}"
+          route: >-
+            f(-1.65,5)(0.43,7.08)(0.43,7.08)(19.43,7.08)
+            (17.35,5)(19.43,7.08)(19.43,7.08)(25.51,7.08)(25.51,7.08)
+            (29.53,3.06)(29.53,3.06)(33.29,3.06)(33.29,3.06)(36.35,0)
+            (33.855,2.495)(44.795,2.495)(44.795,2.495)(49.79,-2.5)(49.79,-2.5)
+            (52.85,-2.5)(52.85,-2.5)(55.35,-5)
+            (52.85,-2.5)(71.85,-2.5)(71.85,-2.5)(74.35,0)
+            (74.35,0)(77.24,2.89)(77.24,2.89)(90.24,2.89)(90.24,2.89)(93.35,6)
+
+      row_route_thumb:
+        what: ergogen-footprints/utility_router
+        where: "/^matrix_outer_(bottom|lower)$/"
+        params:
+          net: "{{row_net}}"
+          route: "f(93.35,6)(96.87,9.52)(96.87,9.52)(108.87,9.52)(108.87,9.52)(112.35,13)"
+
+      col_route:
+        what: ergogen-footprints/utility_router
+        where: "/^matrix_(outer|pinky|ring|middle|index|inner)_(bottom|lower|home)$/"
+        params:
+          net: "{{column_net}}"
+          route: "b(8.275,-3.75)(8.275,-22.75)"
+
+      thumb_col_route:
+        what: ergogen-footprints/utility_router
+        where: "/^matrix_thumb_bottom$/"
+        params:
+          net: "{{column_net}}"
+          route: "b(8.275,-3.75)(8.275,-22.75)"
+
+      # UART
+      TX:
+        what: ergogen-footprints/utility_router
+        params:
+          route: "f(114.18,-28.01)(114.18,-25.71)"
+      RX:
+        what: ergogen-footprints/utility_router
+        params:
+          route: "f(119.28,-30.31)(119.28,-23.41)"
+
+      # DIODE VIAS
+      diode_left_via:
+        what: ergogen-footprints/utility_router
+        where: true
+        params:
+          route: "(-1.65, 5)v"
+      diode_right_via:
+        what: ergogen-footprints/utility_router
+        where: true
+        params:
+          route: "(1.65, 5)v"
+
+      fill:
+        what: ergogen-footprints/utility_filled_zone
+        params:
+          fill_type: hatch
+          hatch_orientation: 45
+          hatch_thickness: 0.55
+          hatch_gap: 3.5
+          hatch_smoothing_level: 3
+          hatch_smoothing_value: 1.0
+
+  niu_plate:
+    template: kicad8
+    outlines:
+      main:
+        outline: plate_cutout
+    footprints:
+      # mounting holes
+      top_left:
+        what: ergogen-footprints/mounting_hole_npth
+        where: { shift: [0, 71.5] }
+        params: { hole_size: 3.2, hole_drill: 3.2 }
+
+      bottom_left:
+        what: ergogen-footprints/mounting_hole_npth
+        where: { shift: [0, -13.5] }
+        params: { hole_size: 3.2, hole_drill: 3.2 }
+
+      bottom_right:
+        what: ergogen-footprints/mounting_hole_npth
+        where: { shift: [95, -14] }
+        params: { hole_size: 3.2, hole_drill: 3.2 }
+
+      top_right:
+        what: ergogen-footprints/mounting_hole_npth
+        where: { shift: [95, 71.5] }
+        params: { hole_size: 3.2, hole_drill: 3.2 }
+
+      mid_right:
+        what: ergogen-footprints/mounting_hole_npth
+        where: { shift: [108.73, 26.86] }
+        params: { hole_size: 3.2, hole_drill: 3.2 }
+
+      fill:
+        what: ergogen-footprints/utility_filled_zone
+        params:
+          fill_type: hatch
+          hatch_orientation: 45
+          hatch_thickness: 0.55
+          hatch_gap: 3.5
+          hatch_smoothing_level: 3
+          hatch_smoothing_value: 1.0
+
+cases:
+  niu_case:
+    - what: outline
+      name: pcb_cutout
+      extrude: 2

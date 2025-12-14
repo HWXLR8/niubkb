@@ -1,3 +1,6 @@
 [submodule "ergogen"]
 	path = ergogen
-	url = https://github.com/HWXLR8/ergogen
+	url = https://github.com/ergogen/ergogen
+[submodule "footprints/ergogen-footprints"]
+	path = footprints/ergogen-footprints
+	url = https://github.com/HWXLR8/ergogen-footprints
