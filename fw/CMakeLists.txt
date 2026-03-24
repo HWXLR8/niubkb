@@ -11,9 +11,9 @@ add_executable(niufw
   src/usb_descriptors.c
 )
 set_target_properties(niufw PROPERTIES SUFFIX ".elf")
+pico_generate_pio_header(niufw ${CMAKE_CURRENT_LIST_DIR}/src/ws2812.pio)
 target_include_directories(niufw PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/src
-    ${CMAKE_CURRENT_LIST_DIR}/src/xsm3
 )
 
 target_link_libraries(niufw
