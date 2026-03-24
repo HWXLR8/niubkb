@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "hardware/pio.h"
 #include "pico/bootrom.h"
 #include "pico/stdlib.h"
@@ -31,13 +30,7 @@ static const uint16_t keymap[NUM_ROWS][NUM_COLS] = {
 #define IDLE_TOGGLE_KEY  HID_KEY_A
 #define IDLE_INTERVAL_US (60ULL * 1000000ULL)
 
-static const uint8_t idle_keys[] = {
-    HID_KEY_F14,
-    HID_KEY_F15,
-    HID_KEY_F16,
-    HID_KEY_F17,
-};
-#define IDLE_KEY_COUNT (sizeof(idle_keys) / sizeof(idle_keys[0]))
+#define IDLE_KEY HID_KEY_F17
 
 static bool     idle_enabled         = false;
 static bool     idle_key_prev        = false;
@@ -86,8 +79,7 @@ static bool idle_task(bool state[NUM_ROWS][NUM_COLS]) {
     if (now - idle_last_fire_us < IDLE_INTERVAL_US) return false;
     idle_last_fire_us = now;
 
-    uint8_t key = idle_keys[rand() % IDLE_KEY_COUNT];
-    uint8_t keycodes[6] = { key, 0, 0, 0, 0, 0 };
+    uint8_t keycodes[6] = { IDLE_KEY, 0, 0, 0, 0, 0 };
     tud_hid_keyboard_report(0, 0, keycodes);
     idle_release_pending = true;
     return true;
@@ -122,7 +114,6 @@ int main(void) {
     stdio_init_all();
     matrix_init();
     tusb_init();
-    srand(time_us_32());
 
     // WS2812 init
     uint offset = pio_add_program(LED_PIO, &ws2812_program);
