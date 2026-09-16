@@ -87,6 +87,8 @@ static bool     idle_key_prev        = false;
 static uint64_t idle_last_fire_us    = 0;
 static bool     idle_release_pending = false;
 
+static bool     link_up              = false; // set by link_task(), shown on the LED
+
 static bool idle_task(bool local[NUM_ROWS][NUM_COLS], bool remote[NUM_ROWS][NUM_COLS]) {
     bool toggle_pressed  = false;
     bool any_key_pressed = false;
@@ -112,7 +114,8 @@ static bool idle_task(bool local[NUM_ROWS][NUM_COLS], bool remote[NUM_ROWS][NUM_
         idle_enabled = false;
     }
     idle_key_prev = toggle_pressed;
-    led_set_rgb(0, idle_enabled ? 16 : 0, 0);
+    // green = idle armed, red = no frames from the far half
+    led_set_rgb(link_up ? 0 : 8, idle_enabled ? 16 : 0, 0);
 
     if (idle_release_pending) {
         idle_release_pending = false;
@@ -208,8 +211,8 @@ static void link_task(void) {
     }
 
     // drop the far half if it goes quiet, so keys never stick on unplug
-    if (time_us_64() - link_last_rx_us > LINK_TIMEOUT_US)
-        memset(remote_state, 0, sizeof(remote_state));
+    link_up = time_us_64() - link_last_rx_us <= LINK_TIMEOUT_US;
+    if (!link_up) memset(remote_state, 0, sizeof(remote_state));
 }
 
 static void report_add(uint16_t entry, uint8_t *modifier, uint8_t *keycodes, int *idx) {
@@ -236,6 +239,10 @@ static void link_task(bool state[NUM_ROWS][NUM_COLS]) {
                 int bit = r * NUM_COLS + c;
                 cur[bit / 8] |= 1u << (bit % 8);
             }
+
+    // dim blue = powered and scanning, green = a key is down on this half
+    bool any = cur[0] || cur[1] || cur[2] || cur[3];
+    led_set_rgb(0, any ? 16 : 0, any ? 0 : 4);
 
     uint64_t now = time_us_64();
     if (memcmp(cur, prev, sizeof(cur)) == 0 && now - last_us < LINK_HEARTBEAT_US) return;

@@ -34,5 +34,6 @@ target_link_libraries(niufw
 )
 
 pico_enable_stdio_usb(niufw 0)
-pico_enable_stdio_uart(niufw 1)
+# off: stdio would claim GP0/GP1, which are the TRRS link pins
+pico_enable_stdio_uart(niufw 0)
 pico_add_extra_outputs(niufw)
