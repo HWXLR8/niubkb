@@ -1,7 +1,7 @@
 PICOTOOL_PATH := picotool
 PICO_SDK_PATH := ./pico-sdk
 
-.PHONY: all left right flash-left flash-right clean
+.PHONY: all left right clean
 
 all: left right
 
