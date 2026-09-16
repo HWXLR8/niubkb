@@ -271,6 +271,9 @@ int main(void) {
     // WS2812 init
     uint offset = pio_add_program(LED_PIO, &ws2812_program);
     ws2812_program_init(LED_PIO, LED_SM, offset, LED_PIN, 800000, false);
+    // boot flash, so "never ran" is distinguishable from "ran and left"
+    led_set_rgb(8, 8, 8);
+    sleep_ms(150);
     led_set_rgb(0, 0, 0);
 
     bool state[NUM_ROWS][NUM_COLS] = {0};
