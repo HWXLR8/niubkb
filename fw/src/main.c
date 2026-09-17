@@ -163,6 +163,55 @@ static void matrix_scan(bool state[NUM_ROWS][NUM_COLS]) {
     }
 }
 
+//// BOOTSEL ESCAPES
+
+// Two independent ways back into the bootloader, needed because the right half's
+// module is mounted inverted and its BOOT button is unreachable:
+//
+//   1. hold the outer/top key while plugging in, or press it while running
+//   2. pull BOOTSEL_PIN to ground
+//
+// Both are checked at the top of main(), before any init that can block, and both
+// stay live afterwards. The pin is additionally polled from a timer IRQ, so it works
+// even if the main loop wedges (e.g. a stalled pio_sm_put_blocking).
+//
+// GP7 is MCU pad 16 (net P16) and is unconnected on the PCB, so its through-hole
+// doubles as the test point. Active low: short it to any ground.
+
+#define BOOTSEL_PIN     7
+#define BOOTSEL_KEY_R   0 // top row
+#define BOOTSEL_KEY_C   0 // outer column
+#define BOOTSEL_POLL_MS 20
+
+static void bootsel_pin_init(void) {
+    gpio_init(BOOTSEL_PIN);
+    gpio_set_dir(BOOTSEL_PIN, GPIO_IN);
+    gpio_pull_up(BOOTSEL_PIN);
+}
+
+static inline bool bootsel_pin_asserted(void) {
+    return !gpio_get(BOOTSEL_PIN);
+}
+
+// Runs off a timer IRQ, so grounding the pin works while the keyboard is live and
+// even if the main loop is wedged.
+static bool bootsel_timer_cb(repeating_timer_t *t) {
+    (void)t;
+    if (bootsel_pin_asserted()) reset_usb_boot(0, 0);
+    return true;
+}
+
+// Held key or grounded pin at power-on.
+static void bootsel_check_at_boot(void) {
+    bool state[NUM_ROWS][NUM_COLS];
+
+    sleep_ms(1); // let the pull-up settle before the first read
+    matrix_scan(state);
+
+    if (bootsel_pin_asserted() || state[BOOTSEL_KEY_R][BOOTSEL_KEY_C])
+        reset_usb_boot(0, 0);
+}
+
 //// SPLIT LINK
 
 // Frame: 0xA5 | s0 | s1 | s2 | s3 | xor, where s0..s3 hold the 28 key bits and xor
@@ -261,8 +310,14 @@ static void link_task(bool state[NUM_ROWS][NUM_COLS]) {
 #endif
 
 int main(void) {
-    stdio_init_all();
+    // before anything that can block, so the escapes survive a broken main loop
+    static repeating_timer_t bootsel_timer;
+    bootsel_pin_init();
     matrix_init();
+    bootsel_check_at_boot();
+    add_repeating_timer_ms(-BOOTSEL_POLL_MS, bootsel_timer_cb, NULL, &bootsel_timer);
+
+    stdio_init_all();
     link_init();
 #if IS_MASTER
     tusb_init();
@@ -291,7 +346,7 @@ int main(void) {
         matrix_scan(state);
 
         // jump to bootsel if the outer/top key is hit
-        if (state[0][0]) {
+        if (state[BOOTSEL_KEY_R][BOOTSEL_KEY_C]) {
           reset_usb_boot(0, 0);
         }
 
