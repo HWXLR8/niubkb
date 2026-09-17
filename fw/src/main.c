@@ -43,28 +43,53 @@
 static const uint8_t row_pins[NUM_ROWS] = { 26, 15, 14, 13 };
 static const uint8_t col_pins[NUM_COLS] = {  2, 29,  3, 28,  4, 27,  5 };
 
+#define NUM_LAYERS 2
+
+#define TRNS  0xFFFF // fall through to layer 0
+#define FN    0xFFFE // momentary layer 1
+
 // Both keymaps are written in physical left-to-right order. On the left half that is
 // col_pins[] order; the right half is the same PCB flipped, so its physical order is
 // the mirror image and keymap_at() reverses the lookup.
-static const uint16_t keymap[2][NUM_ROWS][NUM_COLS] = {
-    //  outer          pinky           ring          middle                               index                                inner              thumb
+static const uint16_t keymap[NUM_LAYERS][2][NUM_ROWS][NUM_COLS] = {
+    [0] = {
+    // outer, pinky, ring, middle, index, inner, thumb
     [HAND_LEFT] = {
-    { HID_KEY_NONE, HID_KEY_Q,      HID_KEY_W,    HID_KEY_F,                           HID_KEY_P,                           HID_KEY_G,         HID_KEY_NONE },
-    { HID_KEY_NONE, HID_KEY_A,      HID_KEY_R,    HID_KEY_S,                           HID_KEY_T,                           HID_KEY_D,         HID_KEY_NONE },
-    { HID_KEY_NONE, HID_KEY_Z,      HID_KEY_X,    HID_KEY_C,                           HID_KEY_V,                           HID_KEY_B,         HID_KEY_DELETE },
-    { HID_KEY_NONE, HID_KEY_ESCAPE, HID_KEY_NONE, MOD(KEYBOARD_MODIFIER_LEFTGUI, 0),   MOD(KEYBOARD_MODIFIER_LEFTSHIFT, 0), HID_KEY_BACKSPACE, HID_KEY_TAB },
+    { HID_KEY_NONE , HID_KEY_Q     , HID_KEY_W   , HID_KEY_F                        , HID_KEY_P                          , HID_KEY_G        , HID_KEY_NONE },
+    { HID_KEY_EQUAL, HID_KEY_A     , HID_KEY_R   , HID_KEY_S                        , HID_KEY_T                          , HID_KEY_D        , HID_KEY_NONE },
+    { HID_KEY_NONE , HID_KEY_Z     , HID_KEY_X   , HID_KEY_C                        , HID_KEY_V                          , HID_KEY_B        , HID_KEY_DELETE },
+    { HID_KEY_NONE , HID_KEY_ESCAPE, HID_KEY_NONE, MOD(KEYBOARD_MODIFIER_LEFTGUI, 0), MOD(KEYBOARD_MODIFIER_LEFTSHIFT, 0), HID_KEY_BACKSPACE, MOD(KEYBOARD_MODIFIER_LEFTCTRL, 0) },
     },
-    //  thumb                              inner          index                  middle         ring                pinky              outer
+    // thumb, inner, index, middle, ring, pinky, outer
     [HAND_RIGHT] = {
-    { HID_KEY_NONE,                      HID_KEY_J,     HID_KEY_L,             HID_KEY_U,     HID_KEY_Y,          HID_KEY_SEMICOLON, HID_KEY_NONE },
-    { HID_KEY_NONE,                      HID_KEY_H,     HID_KEY_N,             HID_KEY_E,     HID_KEY_I,          HID_KEY_O,         HID_KEY_NONE },
-    { HID_KEY_NONE,                      HID_KEY_K,     HID_KEY_M,             HID_KEY_COMMA, HID_KEY_PERIOD,     HID_KEY_SLASH,     HID_KEY_NONE },
-    { MOD(KEYBOARD_MODIFIER_LEFTALT, 0), HID_KEY_SPACE, HID_KEY_NONE /* FN */, HID_KEY_MINUS, HID_KEY_APOSTROPHE, HID_KEY_ENTER,     HID_KEY_NONE },
+    { HID_KEY_NONE                     , HID_KEY_J    , HID_KEY_L, HID_KEY_U    , HID_KEY_Y     , HID_KEY_SEMICOLON, HID_KEY_NONE },
+    { HID_KEY_NONE                     , HID_KEY_H    , HID_KEY_N, HID_KEY_E    , HID_KEY_I     , HID_KEY_O        , HID_KEY_APOSTROPHE },
+    { HID_KEY_NONE                     , HID_KEY_K    , HID_KEY_M, HID_KEY_COMMA, HID_KEY_PERIOD, HID_KEY_SLASH    , HID_KEY_NONE },
+    { MOD(KEYBOARD_MODIFIER_LEFTALT, 0), HID_KEY_SPACE, FN       , HID_KEY_MINUS, HID_KEY_NONE  , HID_KEY_ENTER    , HID_KEY_NONE },
+    },
+    },
+    [1] = {
+    // outer, pinky, ring, middle, index, inner, thumb
+    [HAND_LEFT] = {
+    { TRNS, MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_1), MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_2), HID_KEY_ARROW_UP                           , MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_BRACKET_LEFT), MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_BRACKET_RIGHT), TRNS },
+    { TRNS, MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_3), HID_KEY_ARROW_LEFT                         , HID_KEY_ARROW_DOWN                         , HID_KEY_ARROW_RIGHT                                   , MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_4)            , TRNS },
+    { TRNS, HID_KEY_BRACKET_LEFT                       , HID_KEY_BRACKET_RIGHT                      , MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_9), MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_0)           , MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_7)            , TRNS },
+    { TRNS, TRNS                                       , HID_KEY_INSERT                             , MOD(KEYBOARD_MODIFIER_LEFTGUI, 0)          , MOD(KEYBOARD_MODIFIER_LEFTSHIFT, 0)                   , HID_KEY_BACKSPACE                                      , MOD(KEYBOARD_MODIFIER_LEFTCTRL, 0) },
+    },
+    // thumb, inner, index, middle, ring, pinky, outer
+    [HAND_RIGHT] = {
+    { TRNS                             , HID_KEY_PAGE_UP  , HID_KEY_7, HID_KEY_8     , HID_KEY_9, MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_8)    , TRNS },
+    { TRNS                             , HID_KEY_PAGE_DOWN, HID_KEY_4, HID_KEY_5     , HID_KEY_6, MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_EQUAL), TRNS },
+    { TRNS                             , HID_KEY_GRAVE    , HID_KEY_1, HID_KEY_2     , HID_KEY_3, HID_KEY_BACKSLASH                              , TRNS },
+    { MOD(KEYBOARD_MODIFIER_LEFTALT, 0), HID_KEY_SPACE    , TRNS     , HID_KEY_PERIOD, HID_KEY_0, HID_KEY_EQUAL                                  , TRNS },
+    },
     },
 };
 
-static inline uint16_t keymap_at(int hand, int r, int c) {
-    return keymap[hand][r][hand == HAND_RIGHT ? NUM_COLS - 1 - c : c];
+static inline uint16_t keymap_at(int layer, int hand, int r, int c) {
+    int col = (hand == HAND_RIGHT) ? NUM_COLS - 1 - c : c;
+    uint16_t e = keymap[layer][hand][r][col];
+    return (e == TRNS) ? keymap[0][hand][r][col] : e;
 }
 
 static inline void led_set_rgb(uint8_t r, uint8_t g, uint8_t b) {
@@ -72,71 +97,6 @@ static inline void led_set_rgb(uint8_t r, uint8_t g, uint8_t b) {
     uint32_t grb = ((uint32_t)g << 24) | ((uint32_t)r << 16) | ((uint32_t)b << 8);
     pio_sm_put_blocking(LED_PIO, LED_SM, grb);
 }
-
-//// IDLE
-
-#if IS_MASTER
-
-#define IDLE_TOGGLE_KEY  HID_KEY_A
-#define IDLE_INTERVAL_US (60ULL * 1000000ULL)
-
-#define IDLE_KEY HID_KEY_F17
-
-static bool     idle_enabled         = false;
-static bool     idle_key_prev        = false;
-static uint64_t idle_last_fire_us    = 0;
-static bool     idle_release_pending = false;
-
-static bool     link_up              = false; // set by link_task(), shown on the LED
-
-static bool idle_task(bool local[NUM_ROWS][NUM_COLS], bool remote[NUM_ROWS][NUM_COLS]) {
-    bool toggle_pressed  = false;
-    bool any_key_pressed = false;
-
-    for (int r = 0; r < NUM_ROWS; r++)
-        for (int c = 0; c < NUM_COLS; c++) {
-            if (local[r][c]) {
-                uint8_t key = keymap_at(HAND, r, c) & 0xFF;
-                if (key == IDLE_TOGGLE_KEY)
-                    toggle_pressed = true;
-                else
-                    any_key_pressed = true;
-            }
-            // any keypress on the far half cancels idle too
-            if (remote[r][c] && keymap_at(!HAND, r, c))
-                any_key_pressed = true;
-        }
-
-    if (toggle_pressed && !idle_key_prev) {
-        idle_enabled = !idle_enabled;
-        idle_last_fire_us = time_us_64();
-    } else if (any_key_pressed && idle_enabled) {
-        idle_enabled = false;
-    }
-    idle_key_prev = toggle_pressed;
-    // green = idle armed, red = no frames from the far half
-    led_set_rgb(link_up ? 0 : 8, idle_enabled ? 16 : 0, 0);
-
-    if (idle_release_pending) {
-        idle_release_pending = false;
-        uint8_t empty[6] = {0};
-        tud_hid_keyboard_report(0, 0, empty);
-        return true;
-    }
-
-    if (!idle_enabled) return false;
-
-    uint64_t now = time_us_64();
-    if (now - idle_last_fire_us < IDLE_INTERVAL_US) return false;
-    idle_last_fire_us = now;
-
-    uint8_t keycodes[6] = { IDLE_KEY, 0, 0, 0, 0, 0 };
-    tud_hid_keyboard_report(0, 0, keycodes);
-    idle_release_pending = true;
-    return true;
-}
-
-#endif // IS_MASTER
 
 //// MATRIX SCAN
 
@@ -260,11 +220,12 @@ static void link_task(void) {
     }
 
     // drop the far half if it goes quiet, so keys never stick on unplug
-    link_up = time_us_64() - link_last_rx_us <= LINK_TIMEOUT_US;
-    if (!link_up) memset(remote_state, 0, sizeof(remote_state));
+    if (time_us_64() - link_last_rx_us > LINK_TIMEOUT_US)
+        memset(remote_state, 0, sizeof(remote_state));
 }
 
 static void report_add(uint16_t entry, uint8_t *modifier, uint8_t *keycodes, int *idx) {
+    if (entry == FN) return; // layer key, never reported
     *modifier |= (entry >> 8);
     uint8_t key = entry & 0xFF;
     if (key && *idx < 6) keycodes[(*idx)++] = key;
@@ -288,10 +249,6 @@ static void link_task(bool state[NUM_ROWS][NUM_COLS]) {
                 int bit = r * NUM_COLS + c;
                 cur[bit / 8] |= 1u << (bit % 8);
             }
-
-    // dim blue = powered and scanning, green = a key is down on this half
-    bool any = cur[0] || cur[1] || cur[2] || cur[3];
-    led_set_rgb(0, any ? 16 : 0, any ? 0 : 4);
 
     uint64_t now = time_us_64();
     if (memcmp(cur, prev, sizeof(cur)) == 0 && now - last_us < LINK_HEARTBEAT_US) return;
@@ -326,9 +283,6 @@ int main(void) {
     // WS2812 init
     uint offset = pio_add_program(LED_PIO, &ws2812_program);
     ws2812_program_init(LED_PIO, LED_SM, offset, LED_PIN, 800000, false);
-    // boot flash, so "never ran" is distinguishable from "ran and left"
-    led_set_rgb(8, 8, 8);
-    sleep_ms(150);
     led_set_rgb(0, 0, 0);
 
     bool state[NUM_ROWS][NUM_COLS] = {0};
@@ -353,16 +307,21 @@ int main(void) {
 #if IS_MASTER
         link_task();
 
-        if (idle_task(state, remote_state)) continue;
-
         memset(keycodes, 0, sizeof(keycodes));
         uint8_t modifier = 0;
         int idx = 0;
 
+        int layer = 0;
+        for (int r = 0; r < NUM_ROWS; r++)
+          for (int c = 0; c < NUM_COLS; c++)
+            if ((state[r][c]        && keymap_at(0, HAND,  r, c) == FN) ||
+                (remote_state[r][c] && keymap_at(0, !HAND, r, c) == FN))
+              layer = 1;
+
         for (int r = 0; r < NUM_ROWS; r++)
           for (int c = 0; c < NUM_COLS; c++) {
-            if (state[r][c])        report_add(keymap_at(HAND,  r, c), &modifier, keycodes, &idx);
-            if (remote_state[r][c]) report_add(keymap_at(!HAND, r, c), &modifier, keycodes, &idx);
+            if (state[r][c])        report_add(keymap_at(layer, HAND,  r, c), &modifier, keycodes, &idx);
+            if (remote_state[r][c]) report_add(keymap_at(layer, !HAND, r, c), &modifier, keycodes, &idx);
           }
         tud_hid_keyboard_report(0, modifier, keycodes);
 #else
