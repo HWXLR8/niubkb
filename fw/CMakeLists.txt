@@ -12,6 +12,11 @@ add_executable(niufw
 )
 set_target_properties(niufw PROPERTIES SUFFIX ".elf")
 pico_generate_pio_header(niufw ${CMAKE_CURRENT_LIST_DIR}/src/ws2812.pio)
+pico_generate_pio_header(niufw ${CMAKE_CURRENT_LIST_DIR}/src/uart_tx.pio)
+
+# set by the Makefile via -DHAND=; not meant to be edited here
+set(HAND "HAND_LEFT" CACHE STRING "HAND_LEFT or HAND_RIGHT")
+target_compile_definitions(niufw PRIVATE HAND=${HAND})
 target_include_directories(niufw PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/src
 )
@@ -25,8 +30,10 @@ target_link_libraries(niufw
     hardware_gpio
     hardware_pio
     hardware_i2c
+    hardware_uart
 )
 
 pico_enable_stdio_usb(niufw 0)
-pico_enable_stdio_uart(niufw 1)
+# off: stdio would claim GP0/GP1, which are the TRRS link pins
+pico_enable_stdio_uart(niufw 0)
 pico_add_extra_outputs(niufw)
