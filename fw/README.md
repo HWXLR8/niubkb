@@ -1,53 +1,26 @@
-Custom FW for Haute42 S16.
+### Layout
 
-### Input Latency
-Average latency is `0.814 ms` measured using the methodology described on [inputlag.science](http://inputlag.science)
+L0
 
-### Feature list
+```
+ --    Q     W    F      P      G     ·   ||    ·    J     L     U     Y     ;     --
+  =    A     R    S      T      D     ·   ||    ·    H     N     E     I     O      '
+ --    Z     X    C      V      B    DEL  ||   --    K     M     ,     .     /     --
+ --   ESC   --   GUI   SHIFT  BSPC  CTRL  ||  ALT  SPACE  FN     -    --   ENTER   --
+```
 
-| Feature              | State | Notes                                       |
-|:---------------------|:-----:|:--------------------------------------------|
-| HID Gamepad          | ✅    | Tested on Linux and Windows (DirectInput).  |
-| HID Keyboard         | ❌    |                                             |
-| XInput               | ✅    |                                             |
-| 1000Hz Polling       | ✅    |                                             |
-| Button Remap         | ✅    |                                             |
-| Button Debounce      | ✅    | Leading-edge, configurable per-button.      |
-| SOCD Cleaning        | ⚠️    | Neutral/Last-input only.                    |
-| LED Support          | ✅    | Per-button LED config for idle/press color. |
-| LED Brightness       | ⚠️    | On/off toggle only.                         |
-| LED Animations       | ⚠️    | Button illumination on press only.          |
-| OLED Support         | ✅    |                                             |
-| OLED Images          | ✅    |                                             |
-| OLED Animations      | ✅    |                                             |
-| Live config          | ⚠️    | Turbo, LED/OLED toggle only.                |
-| Persistent Settings  | ⚠️    | Does not save turbo settings.               |
-| Turbo                | ✅    | 15.6/31.25/62.5Hz configurable per button.  |
+L1
 
-| Platfrom Support     | State | Notes                                       |
-|:---------------------|:-----:|:--------------------------------------------|
-| Linux                | ✅    |                                             |
-| Windows              | ✅    | DirectInput and XInput supported.           |
-| MacOS                | ⚠️    | Untested, likely works.                     |
-| MiSTer FPGA          | ✅    |                                             |
-| Nintendo Switch      | ❌    |                                             |
-| Nintendo Switch 2    | ❌    |                                             |
-| Xbox 360             | ✅    |                                             |
-| PS1                  | ❌    |                                             |
-| PS2                  | ❌    |                                             |
-| PS3                  | ❌    |                                             |
-| PS4                  | ❌    |                                             |
-| PS5                  | ❌    |                                             |
+```
+  ~    !     @    UP     {      }     ·   ||    ·  PGUP    7     8     9     *      ~
+  ~    #    LEFT DOWN  RIGHT    $     ·   ||    ·  PGDN    4     5     6     +      ~
+  ~    [     ]    (      )      &     ~   ||    ~    `     1     2     3     \      ~
+  ~    ~    INS  GUI   SHIFT  BSPC  CTRL  ||  ALT  SPACE   ~     .     0     =      ~
+```
 
-### Button Combos
+Hold `FN` for layer 1. `~` falls through to the base layer.
+`--` is unmapped, `·` has no switch on the PCB.
 
-| Combo             | Action                                      |
-|:------------------|:--------------------------------------------|
-| `TURBO + B13`     | Toggle LEDs on/off (hold 1s)                |
-| `TURBO + B14`     | Toggle OLED on/off (hold 1s)                |
-| `TURBO + B15`     | Toggle USB mode (HID/XInput, hold 1s)       |
-| `TURBO + B16`     | Save settings to flash (hold 1s)            |
-| `TURBO`           | Enter turbo config mode (hold 1s)           |
-| `B8 + B9`         | Enter bootloader (instant)                  |
-
-**Note:** USB mode changes take effect on next boot.
+Both thumb keys on the bottom row are mod-taps: tapped they send `TAB` / `ENTER`,
+held they act as `CTRL` / `ALT`. A mod-tap resolves to its modifier as soon as any
+other key goes down, or after 200 ms.

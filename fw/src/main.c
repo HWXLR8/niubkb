@@ -43,7 +43,15 @@
 
 #define NUM_ROWS 4
 #define NUM_COLS 7
-#define MOD(mod, key) ((uint16_t)(mod) << 8 | (key))
+#define MOD(mod, key) ((uint32_t)(mod) << 8 | (key))
+
+// Mod-tap: the modifier when held, the keycode when tapped. Needs its own flag bit
+// because layer 1 already has plain entries carrying both a modifier and a keycode
+// (the shifted symbols), so "has both" can't be the discriminator.
+#define MT_FLAG      0x10000u
+#define MT(mod, key) (MT_FLAG | (uint32_t)(mod) << 8 | (key))
+#define IS_MT(e)     ((e) & MT_FLAG)
+#define MT_TERM_US   200000ULL
 
 static const uint8_t row_pins[NUM_ROWS] = { 26, 15, 14, 13 };
 static const uint8_t col_pins[NUM_COLS] = {  2, 29,  3, 28,  4, 27,  5 };
@@ -56,21 +64,21 @@ static const uint8_t col_pins[NUM_COLS] = {  2, 29,  3, 28,  4, 27,  5 };
 // Both keymaps are written in physical left-to-right order. On the left half that is
 // col_pins[] order; the right half is the same PCB flipped, so its physical order is
 // the mirror image and keymap_at() reverses the lookup.
-static const uint16_t keymap[NUM_LAYERS][2][NUM_ROWS][NUM_COLS] = {
+static const uint32_t keymap[NUM_LAYERS][2][NUM_ROWS][NUM_COLS] = {
     [0] = {
     // outer, pinky, ring, middle, index, inner, thumb
     [HAND_LEFT] = {
     { HID_KEY_NONE , HID_KEY_Q     , HID_KEY_W   , HID_KEY_F                        , HID_KEY_P                          , HID_KEY_G        , HID_KEY_NONE },
     { HID_KEY_EQUAL, HID_KEY_A     , HID_KEY_R   , HID_KEY_S                        , HID_KEY_T                          , HID_KEY_D        , HID_KEY_NONE },
     { HID_KEY_NONE , HID_KEY_Z     , HID_KEY_X   , HID_KEY_C                        , HID_KEY_V                          , HID_KEY_B        , HID_KEY_DELETE },
-    { HID_KEY_NONE , HID_KEY_ESCAPE, HID_KEY_NONE, MOD(KEYBOARD_MODIFIER_LEFTGUI, 0), MOD(KEYBOARD_MODIFIER_LEFTSHIFT, 0), HID_KEY_BACKSPACE, MOD(KEYBOARD_MODIFIER_LEFTCTRL, 0) },
+    { HID_KEY_NONE , HID_KEY_ESCAPE, HID_KEY_NONE, MOD(KEYBOARD_MODIFIER_LEFTGUI, 0), MOD(KEYBOARD_MODIFIER_LEFTSHIFT, 0), HID_KEY_BACKSPACE, MT(KEYBOARD_MODIFIER_LEFTCTRL, HID_KEY_TAB) },
     },
     // thumb, inner, index, middle, ring, pinky, outer
     [HAND_RIGHT] = {
     { HID_KEY_NONE                     , HID_KEY_J    , HID_KEY_L, HID_KEY_U    , HID_KEY_Y     , HID_KEY_SEMICOLON, HID_KEY_NONE },
     { HID_KEY_NONE                     , HID_KEY_H    , HID_KEY_N, HID_KEY_E    , HID_KEY_I     , HID_KEY_O        , HID_KEY_APOSTROPHE },
     { HID_KEY_NONE                     , HID_KEY_K    , HID_KEY_M, HID_KEY_COMMA, HID_KEY_PERIOD, HID_KEY_SLASH    , HID_KEY_NONE },
-    { MOD(KEYBOARD_MODIFIER_LEFTALT, 0), HID_KEY_SPACE, FN       , HID_KEY_MINUS, HID_KEY_NONE  , HID_KEY_ENTER    , HID_KEY_NONE },
+    { MT(KEYBOARD_MODIFIER_LEFTALT, HID_KEY_ENTER), HID_KEY_SPACE, FN, HID_KEY_MINUS, HID_KEY_NONE  , HID_KEY_ENTER    , HID_KEY_NONE },
     },
     },
     [1] = {
@@ -91,9 +99,9 @@ static const uint16_t keymap[NUM_LAYERS][2][NUM_ROWS][NUM_COLS] = {
     },
 };
 
-static inline uint16_t keymap_at(int layer, int hand, int r, int c) {
+static inline uint32_t keymap_at(int layer, int hand, int r, int c) {
     int col = (hand == HAND_RIGHT) ? NUM_COLS - 1 - c : c;
-    uint16_t e = keymap[layer][hand][r][col];
+    uint32_t e = keymap[layer][hand][r][col];
     return (e == TRNS) ? keymap[0][hand][r][col] : e;
 }
 
@@ -265,9 +273,66 @@ static void link_task(void) {
         memset(remote_state, 0, sizeof(remote_state));
 }
 
-static void report_add(uint16_t entry, uint8_t *modifier, uint8_t *keycodes, int *idx) {
+//// MOD-TAP
+
+// Hold-on-other-key-press: a mod-tap becomes its modifier as soon as anything else is
+// down, or after MT_TERM_US, whichever comes first. Nothing is ever deferred, so no
+// keypress is delayed waiting for a decision.
+enum { MT_IDLE, MT_PENDING, MT_HELD };
+
+static uint8_t  mt_state[2][NUM_ROWS][NUM_COLS] = {0};
+static uint64_t mt_t0[2][NUM_ROWS][NUM_COLS]    = {0};
+static uint8_t  pending_tap                     = 0;
+
+static void mt_task(int layer, bool local[NUM_ROWS][NUM_COLS],
+                    bool remote[NUM_ROWS][NUM_COLS]) {
+    uint64_t now = time_us_64();
+    bool other_down = false;
+
+    for (int r = 0; r < NUM_ROWS; r++)
+        for (int c = 0; c < NUM_COLS; c++)
+            for (int h = 0; h < 2; h++) {
+                bool pressed = (h == HAND) ? local[r][c] : remote[r][c];
+                uint32_t e = keymap_at(layer, h, r, c);
+                if (pressed && e && !IS_MT(e)) other_down = true;
+            }
+
+    for (int r = 0; r < NUM_ROWS; r++)
+        for (int c = 0; c < NUM_COLS; c++)
+            for (int h = 0; h < 2; h++) {
+                uint32_t e = keymap_at(layer, h, r, c);
+                bool pressed = (h == HAND) ? local[r][c] : remote[r][c];
+                uint8_t *st = &mt_state[h][r][c];
+
+                // clear on release whatever the entry is now, so a layer change while
+                // the key is down can't strand it in MT_PENDING
+                if (!pressed) {
+                    if (*st == MT_PENDING && IS_MT(e)) pending_tap = e & 0xFF;
+                    *st = MT_IDLE;
+                    continue;
+                }
+                if (!IS_MT(e)) continue;
+
+                if (*st == MT_IDLE) {
+                    *st = MT_PENDING;
+                    mt_t0[h][r][c] = now;
+                } else if (*st == MT_PENDING &&
+                           (other_down || now - mt_t0[h][r][c] >= MT_TERM_US)) {
+                    *st = MT_HELD;
+                }
+            }
+}
+
+static void report_add(uint32_t entry, uint8_t state, uint8_t *modifier,
+                       uint8_t *keycodes, int *idx) {
     if (entry == FN) return; // layer key, never reported
-    *modifier |= (entry >> 8);
+    if (IS_MT(entry)) {
+        // undecided contributes nothing; once held it is the modifier only, and the
+        // tap keycode is emitted separately on release
+        if (state == MT_HELD) *modifier |= (entry >> 8) & 0xFF;
+        return;
+    }
+    *modifier |= (entry >> 8) & 0xFF;
     uint8_t key = entry & 0xFF;
     if (key && *idx < 6) keycodes[(*idx)++] = key;
 }
@@ -410,11 +475,19 @@ int main(void) {
                 (remote_state[r][c] && keymap_at(0, !HAND, r, c) == FN))
               layer = 1;
 
+        mt_task(layer, state, remote_state);
+
         for (int r = 0; r < NUM_ROWS; r++)
           for (int c = 0; c < NUM_COLS; c++) {
-            if (state[r][c])        report_add(keymap_at(layer, HAND,  r, c), &modifier, keycodes, &idx);
-            if (remote_state[r][c]) report_add(keymap_at(layer, !HAND, r, c), &modifier, keycodes, &idx);
+            if (state[r][c])        report_add(keymap_at(layer, HAND,  r, c), mt_state[HAND][r][c],  &modifier, keycodes, &idx);
+            if (remote_state[r][c]) report_add(keymap_at(layer, !HAND, r, c), mt_state[!HAND][r][c], &modifier, keycodes, &idx);
           }
+
+        // one-report pulse; the next report rebuilds without it, which is the release
+        if (pending_tap) {
+          if (idx < 6) keycodes[idx++] = pending_tap;
+          pending_tap = 0;
+        }
         tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycodes);
 #else
         link_task(state);
