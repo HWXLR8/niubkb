@@ -275,9 +275,9 @@ static void link_task(void) {
 
 //// MOD-TAP
 
-// Hold-on-other-key-press: a mod-tap becomes its modifier as soon as anything else is
-// down, or after MT_TERM_US, whichever comes first. Nothing is ever deferred, so no
-// keypress is delayed waiting for a decision.
+// Hold-on-other-key-press: a mod-tap becomes its modifier when another key goes down
+// after it, or after MT_TERM_US, whichever comes first. Nothing is ever deferred, so
+// no keypress is delayed waiting for a decision.
 enum { MT_IDLE, MT_PENDING, MT_HELD };
 
 static uint8_t  mt_state[2][NUM_ROWS][NUM_COLS] = {0};
@@ -286,15 +286,20 @@ static uint8_t  pending_tap                     = 0;
 
 static void mt_task(int layer, bool local[NUM_ROWS][NUM_COLS],
                     bool remote[NUM_ROWS][NUM_COLS]) {
+    static bool prev[2][NUM_ROWS][NUM_COLS] = {0};
     uint64_t now = time_us_64();
-    bool other_down = false;
+    bool other_pressed = false;
 
+    // only a key that goes down *after* the mod-tap counts. A key already held when
+    // the thumb lands must not resolve it, or rolling t -> thumb gives Alt instead of
+    // the Enter tap.
     for (int r = 0; r < NUM_ROWS; r++)
         for (int c = 0; c < NUM_COLS; c++)
             for (int h = 0; h < 2; h++) {
                 bool pressed = (h == HAND) ? local[r][c] : remote[r][c];
                 uint32_t e = keymap_at(layer, h, r, c);
-                if (pressed && e && !IS_MT(e)) other_down = true;
+                if (pressed && !prev[h][r][c] && e && !IS_MT(e)) other_pressed = true;
+                prev[h][r][c] = pressed;
             }
 
     for (int r = 0; r < NUM_ROWS; r++)
@@ -317,7 +322,7 @@ static void mt_task(int layer, bool local[NUM_ROWS][NUM_COLS],
                     *st = MT_PENDING;
                     mt_t0[h][r][c] = now;
                 } else if (*st == MT_PENDING &&
-                           (other_down || now - mt_t0[h][r][c] >= MT_TERM_US)) {
+                           (other_pressed || now - mt_t0[h][r][c] >= MT_TERM_US)) {
                     *st = MT_HELD;
                 }
             }
