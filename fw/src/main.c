@@ -22,6 +22,11 @@
 #define LINK_PIO  pio1
 #define LINK_SM   0
 
+// EC11 on the right half. MCU pads 14/13/15 -> GP9/GP10/GP8 (ENC_A/ENC_B/ENC_SW).
+#define ENC_A_PIN  9
+#define ENC_B_PIN  10
+#define ENC_SW_PIN 8
+
 //// HANDEDNESS
 
 #define HAND_LEFT  0
@@ -177,6 +182,12 @@ static void bootsel_check_at_boot(void) {
 // Frame: 0xA5 | s0 | s1 | s2 | s3 | xor, where s0..s3 hold the 28 key bits and xor
 // covers the sync byte too. 0xA5 can occur in the payload, but the fixed length plus
 // the checksum resynchronises within a frame or two.
+// The 4 payload bytes hold 28 key bits, so bits 28..31 are free: the peripheral uses
+// two of them to pulse a volume tick for exactly one frame.
+#define LINK_BIT_VOL_UP   28
+#define LINK_BIT_VOL_DOWN 29
+#define LINK_BIT_MUTE     30
+
 #define LINK_SYNC         0xA5
 #define LINK_FRAME_LEN    6
 #define LINK_HEARTBEAT_US 20000ULL
@@ -187,6 +198,30 @@ static bool remote_state[NUM_ROWS][NUM_COLS] = {0};
 #if IS_MASTER
 
 static uint64_t link_last_rx_us = 0;
+
+// Volume ticks arrive as one-frame pulses but need a press and a release report each,
+// and only one report can go out per loop iteration.
+static uint16_t consumer_queue[16];
+static int consumer_head = 0, consumer_tail = 0;
+
+static void consumer_push(uint16_t usage) {
+    // needs both slots free, or the release would be dropped and the key would stick
+    if ((consumer_head + 2) % 16 == consumer_tail ||
+        (consumer_head + 1) % 16 == consumer_tail) return;
+    consumer_queue[consumer_head] = usage;
+    consumer_head = (consumer_head + 1) % 16;
+    consumer_queue[consumer_head] = 0; // release
+    consumer_head = (consumer_head + 1) % 16;
+}
+
+// Returns true if a report was sent, so the caller skips the keyboard report.
+static bool consumer_task(void) {
+    if (consumer_head == consumer_tail) return false;
+    uint16_t usage = consumer_queue[consumer_tail];
+    consumer_tail = (consumer_tail + 1) % 16;
+    tud_hid_report(REPORT_ID_CONSUMER, &usage, 2);
+    return true;
+}
 
 static void link_init(void) {
     uart_init(uart0, LINK_BAUD);
@@ -216,6 +251,12 @@ static void link_task(void) {
                 int bit = r * NUM_COLS + c;
                 remote_state[r][c] = (buf[1 + bit / 8] >> (bit % 8)) & 1;
             }
+        if ((buf[1 + LINK_BIT_VOL_UP / 8] >> (LINK_BIT_VOL_UP % 8)) & 1)
+            consumer_push(HID_USAGE_CONSUMER_VOLUME_INCREMENT);
+        if ((buf[1 + LINK_BIT_VOL_DOWN / 8] >> (LINK_BIT_VOL_DOWN % 8)) & 1)
+            consumer_push(HID_USAGE_CONSUMER_VOLUME_DECREMENT);
+        if ((buf[1 + LINK_BIT_MUTE / 8] >> (LINK_BIT_MUTE % 8)) & 1)
+            consumer_push(HID_USAGE_CONSUMER_MUTE);
         link_last_rx_us = time_us_64();
     }
 
@@ -234,8 +275,53 @@ static void report_add(uint16_t entry, uint8_t *modifier, uint8_t *keycodes, int
 #else
 
 static void link_init(void) {
+    gpio_init(ENC_A_PIN);
+    gpio_set_dir(ENC_A_PIN, GPIO_IN);
+    gpio_pull_up(ENC_A_PIN);
+    gpio_init(ENC_B_PIN);
+    gpio_set_dir(ENC_B_PIN, GPIO_IN);
+    gpio_pull_up(ENC_B_PIN);
+    gpio_init(ENC_SW_PIN);
+    gpio_set_dir(ENC_SW_PIN, GPIO_IN);
+    gpio_pull_up(ENC_SW_PIN);
+
     uint offset = pio_add_program(LINK_PIO, &uart_tx_program);
     uart_tx_program_init(LINK_PIO, LINK_SM, offset, LINK_PIN, LINK_BAUD);
+}
+
+// Quadrature decode with a 4-step detent, ported from the v4 QMK keymap: a reversal
+// discards the partial detent so half-steps never emit.
+static int encoder_task(void) {
+    static uint8_t prev_state = 0;
+    static int position = 0, last_direction = 0;
+
+    uint8_t a = gpio_get(ENC_A_PIN) ? 1 : 0;
+    uint8_t b = gpio_get(ENC_B_PIN) ? 1 : 0;
+    uint8_t cur_state = (a << 1) | b;
+    if (cur_state == prev_state) return 0;
+
+    int direction = ((prev_state == 0b00 && cur_state == 0b01) ||
+                     (prev_state == 0b01 && cur_state == 0b11) ||
+                     (prev_state == 0b11 && cur_state == 0b10) ||
+                     (prev_state == 0b10 && cur_state == 0b00)) ? 1 : -1;
+
+    if (direction != last_direction && position != 0) position = 0;
+    position += direction;
+    last_direction = direction;
+    prev_state = cur_state;
+
+    if (position >= 4)  { position = 0; return  1; }
+    if (position <= -4) { position = 0; return -1; }
+    return 0;
+}
+
+// One pulse per press of the shaft, active low.
+static bool encoder_sw_task(void) {
+    static bool prev = false;
+    bool now = !gpio_get(ENC_SW_PIN);
+    bool pressed = now && !prev;
+    prev = now;
+    return pressed;
 }
 
 static void link_task(bool state[NUM_ROWS][NUM_COLS]) {
@@ -243,6 +329,10 @@ static void link_task(bool state[NUM_ROWS][NUM_COLS]) {
     static uint64_t last_us = 0;
 
     uint8_t cur[4] = {0};
+    int tick = encoder_task();
+    if (tick > 0) cur[LINK_BIT_VOL_UP / 8]   |= 1u << (LINK_BIT_VOL_UP % 8);
+    if (tick < 0) cur[LINK_BIT_VOL_DOWN / 8] |= 1u << (LINK_BIT_VOL_DOWN % 8);
+    if (encoder_sw_task()) cur[LINK_BIT_MUTE / 8] |= 1u << (LINK_BIT_MUTE % 8);
     for (int r = 0; r < NUM_ROWS; r++)
         for (int c = 0; c < NUM_COLS; c++)
             if (state[r][c]) {
@@ -307,6 +397,8 @@ int main(void) {
 #if IS_MASTER
         link_task();
 
+        if (consumer_task()) continue;
+
         memset(keycodes, 0, sizeof(keycodes));
         uint8_t modifier = 0;
         int idx = 0;
@@ -323,7 +415,7 @@ int main(void) {
             if (state[r][c])        report_add(keymap_at(layer, HAND,  r, c), &modifier, keycodes, &idx);
             if (remote_state[r][c]) report_add(keymap_at(layer, !HAND, r, c), &modifier, keycodes, &idx);
           }
-        tud_hid_keyboard_report(0, modifier, keycodes);
+        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycodes);
 #else
         link_task(state);
 #endif

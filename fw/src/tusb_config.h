@@ -15,3 +15,8 @@
 // Enable only HID
 #define CFG_TUD_HID             1
 #define CFG_TUD_HID_EP_BUFSIZE  16
+
+enum {
+    REPORT_ID_KEYBOARD = 1,
+    REPORT_ID_CONSUMER,
+};
