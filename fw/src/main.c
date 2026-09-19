@@ -187,17 +187,20 @@ static void bootsel_check_at_boot(void) {
 
 //// SPLIT LINK
 
-// Frame: 0xA5 | s0 | s1 | s2 | s3 | xor, where s0..s3 hold the 28 key bits and xor
-// covers the sync byte too. 0xA5 can occur in the payload, but the fixed length plus
-// the checksum resynchronises within a frame or two.
-// The 4 payload bytes hold 28 key bits, so bits 28..31 are free: the peripheral uses
-// two of them to pulse a volume tick for exactly one frame.
+// Frame: 0x80 | s0 | s1 | s2 | s3 | s4 | xor. Bit 7 is the frame marker and is set on
+// the sync byte only: every payload and checksum byte carries 7 data bits with the top
+// bit clear, so no payload byte can ever be mistaken for sync. A lost or spurious byte
+// therefore costs exactly one frame - the next sync byte restarts the parse
+// unconditionally, with no timeout and no way to lock onto a false alignment.
+// The 5 payload bytes hold 35 bits: 28 key bits plus spares, of which the peripheral
+// uses two to pulse a volume tick for exactly one frame.
 #define LINK_BIT_VOL_UP   28
 #define LINK_BIT_VOL_DOWN 29
 #define LINK_BIT_MUTE     30
 
-#define LINK_SYNC         0xA5
-#define LINK_FRAME_LEN    6
+#define LINK_SYNC         0x80
+#define LINK_PAYLOAD_LEN  5
+#define LINK_FRAME_LEN    7
 #define LINK_HEARTBEAT_US 20000ULL
 #define LINK_TIMEOUT_US   100000ULL
 
@@ -245,25 +248,27 @@ static void link_task(void) {
 
     while (uart_is_readable(uart0)) {
         uint8_t b = uart_getc(uart0);
-        if (idx == 0 && b != LINK_SYNC) continue;
+        // the marker bit can only be a frame start, so it always wins over idx
+        if (b & 0x80) { buf[0] = b; idx = 1; continue; }
+        if (idx == 0) continue;
         buf[idx++] = b;
         if (idx < LINK_FRAME_LEN) continue;
         idx = 0;
 
         uint8_t sum = 0;
-        for (int i = 0; i < LINK_FRAME_LEN - 1; i++) sum ^= buf[i];
+        for (int i = 1; i < LINK_FRAME_LEN - 1; i++) sum ^= buf[i];
         if (sum != buf[LINK_FRAME_LEN - 1]) continue;
 
         for (int r = 0; r < NUM_ROWS; r++)
             for (int c = 0; c < NUM_COLS; c++) {
                 int bit = r * NUM_COLS + c;
-                remote_state[r][c] = (buf[1 + bit / 8] >> (bit % 8)) & 1;
+                remote_state[r][c] = (buf[1 + bit / 7] >> (bit % 7)) & 1;
             }
-        if ((buf[1 + LINK_BIT_VOL_UP / 8] >> (LINK_BIT_VOL_UP % 8)) & 1)
+        if ((buf[1 + LINK_BIT_VOL_UP / 7] >> (LINK_BIT_VOL_UP % 7)) & 1)
             consumer_push(HID_USAGE_CONSUMER_VOLUME_INCREMENT);
-        if ((buf[1 + LINK_BIT_VOL_DOWN / 8] >> (LINK_BIT_VOL_DOWN % 8)) & 1)
+        if ((buf[1 + LINK_BIT_VOL_DOWN / 7] >> (LINK_BIT_VOL_DOWN % 7)) & 1)
             consumer_push(HID_USAGE_CONSUMER_VOLUME_DECREMENT);
-        if ((buf[1 + LINK_BIT_MUTE / 8] >> (LINK_BIT_MUTE % 8)) & 1)
+        if ((buf[1 + LINK_BIT_MUTE / 7] >> (LINK_BIT_MUTE % 7)) & 1)
             consumer_push(HID_USAGE_CONSUMER_MUTE);
         link_last_rx_us = time_us_64();
     }
@@ -395,19 +400,19 @@ static bool encoder_sw_task(void) {
 }
 
 static void link_task(bool state[NUM_ROWS][NUM_COLS]) {
-    static uint8_t prev[4] = {0};
+    static uint8_t prev[LINK_PAYLOAD_LEN] = {0};
     static uint64_t last_us = 0;
 
-    uint8_t cur[4] = {0};
+    uint8_t cur[LINK_PAYLOAD_LEN] = {0};
     int tick = encoder_task();
-    if (tick > 0) cur[LINK_BIT_VOL_UP / 8]   |= 1u << (LINK_BIT_VOL_UP % 8);
-    if (tick < 0) cur[LINK_BIT_VOL_DOWN / 8] |= 1u << (LINK_BIT_VOL_DOWN % 8);
-    if (encoder_sw_task()) cur[LINK_BIT_MUTE / 8] |= 1u << (LINK_BIT_MUTE % 8);
+    if (tick > 0) cur[LINK_BIT_VOL_UP / 7]   |= 1u << (LINK_BIT_VOL_UP % 7);
+    if (tick < 0) cur[LINK_BIT_VOL_DOWN / 7] |= 1u << (LINK_BIT_VOL_DOWN % 7);
+    if (encoder_sw_task()) cur[LINK_BIT_MUTE / 7] |= 1u << (LINK_BIT_MUTE % 7);
     for (int r = 0; r < NUM_ROWS; r++)
         for (int c = 0; c < NUM_COLS; c++)
             if (state[r][c]) {
                 int bit = r * NUM_COLS + c;
-                cur[bit / 8] |= 1u << (bit % 8);
+                cur[bit / 7] |= 1u << (bit % 7);
             }
 
     uint64_t now = time_us_64();
@@ -415,9 +420,9 @@ static void link_task(bool state[NUM_ROWS][NUM_COLS]) {
     memcpy(prev, cur, sizeof(cur));
     last_us = now;
 
-    uint8_t sum = LINK_SYNC;
+    uint8_t sum = 0;
     uart_tx_program_putc(LINK_PIO, LINK_SM, LINK_SYNC);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < LINK_PAYLOAD_LEN; i++) {
         uart_tx_program_putc(LINK_PIO, LINK_SM, cur[i]);
         sum ^= cur[i];
     }
