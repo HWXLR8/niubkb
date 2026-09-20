@@ -136,6 +136,27 @@ static void matrix_scan(bool state[NUM_ROWS][NUM_COLS]) {
     }
 }
 
+//// DEBOUNCE
+
+// Eager: an edge reports immediately, then the key ignores input for DEBOUNCE_MS,
+// so bounces are dropped with zero press latency.
+
+#ifndef DEBOUNCE_MS
+#define DEBOUNCE_MS 1
+#endif
+
+static uint64_t t_last[NUM_ROWS][NUM_COLS] = {0};
+
+static void matrix_debounce(const bool raw[NUM_ROWS][NUM_COLS], bool out[NUM_ROWS][NUM_COLS]) {
+    uint64_t now = time_us_64();
+    for (int r = 0; r < NUM_ROWS; r++)
+        for (int c = 0; c < NUM_COLS; c++)
+            if (raw[r][c] != out[r][c] && now - t_last[r][c] >= DEBOUNCE_MS * 1000ULL) {
+                out[r][c] = raw[r][c];
+                t_last[r][c] = now;
+            }
+}
+
 //// BOOTSEL ESCAPES
 
 // Two independent ways back into the bootloader, needed because the right half's
@@ -289,6 +310,11 @@ static uint8_t  mt_state[2][NUM_ROWS][NUM_COLS] = {0};
 static uint64_t mt_t0[2][NUM_ROWS][NUM_COLS]    = {0};
 static uint8_t  pending_tap                     = 0;
 
+// Entry resolved at press time, so releasing a layer key under a held key cannot
+// remap it into a ghost press. Not cleared on release: the mod-tap path reads it
+// on the release edge to decide whether the tap fires.
+static uint32_t latch[2][NUM_ROWS][NUM_COLS] = {0};
+
 static void mt_task(int layer, bool local[NUM_ROWS][NUM_COLS],
                     bool remote[NUM_ROWS][NUM_COLS]) {
     static bool prev[2][NUM_ROWS][NUM_COLS] = {0};
@@ -303,14 +329,17 @@ static void mt_task(int layer, bool local[NUM_ROWS][NUM_COLS],
             for (int h = 0; h < 2; h++) {
                 bool pressed = (h == HAND) ? local[r][c] : remote[r][c];
                 uint32_t e = keymap_at(layer, h, r, c);
-                if (pressed && !prev[h][r][c] && e && !IS_MT(e)) other_pressed = true;
+                if (pressed && !prev[h][r][c]) {
+                    latch[h][r][c] = e;
+                    if (e && !IS_MT(e)) other_pressed = true;
+                }
                 prev[h][r][c] = pressed;
             }
 
     for (int r = 0; r < NUM_ROWS; r++)
         for (int c = 0; c < NUM_COLS; c++)
             for (int h = 0; h < 2; h++) {
-                uint32_t e = keymap_at(layer, h, r, c);
+                uint32_t e = latch[h][r][c];
                 bool pressed = (h == HAND) ? local[r][c] : remote[r][c];
                 uint8_t *st = &mt_state[h][r][c];
 
@@ -450,6 +479,7 @@ int main(void) {
     ws2812_program_init(LED_PIO, LED_SM, offset, LED_PIN, 800000, false);
     led_set_rgb(0, 0, 0);
 
+    bool raw[NUM_ROWS][NUM_COLS];
     bool state[NUM_ROWS][NUM_COLS] = {0};
 #if IS_MASTER
     uint8_t keycodes[6] = {0};
@@ -462,10 +492,11 @@ int main(void) {
         if (!tud_hid_ready()) continue;
 #endif
 
-        matrix_scan(state);
+        matrix_scan(raw);
+        matrix_debounce(raw, state);
 
         // jump to bootsel if the outer/top key is hit
-        if (state[BOOTSEL_KEY_R][BOOTSEL_KEY_C]) {
+        if (raw[BOOTSEL_KEY_R][BOOTSEL_KEY_C]) {
           reset_usb_boot(0, 0);
         }
 
@@ -489,8 +520,8 @@ int main(void) {
 
         for (int r = 0; r < NUM_ROWS; r++)
           for (int c = 0; c < NUM_COLS; c++) {
-            if (state[r][c])        report_add(keymap_at(layer, HAND,  r, c), mt_state[HAND][r][c],  &modifier, keycodes, &idx);
-            if (remote_state[r][c]) report_add(keymap_at(layer, !HAND, r, c), mt_state[!HAND][r][c], &modifier, keycodes, &idx);
+            if (state[r][c])        report_add(latch[HAND][r][c],  mt_state[HAND][r][c],  &modifier, keycodes, &idx);
+            if (remote_state[r][c]) report_add(latch[!HAND][r][c], mt_state[!HAND][r][c], &modifier, keycodes, &idx);
           }
 
         // one-report pulse; the next report rebuilds without it, which is the release
