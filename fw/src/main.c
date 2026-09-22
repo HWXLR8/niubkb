@@ -70,7 +70,7 @@ static const uint32_t keymap[NUM_LAYERS][2][NUM_ROWS][NUM_COLS] = {
     [HAND_LEFT] = {
     { HID_KEY_NONE , HID_KEY_Q     , HID_KEY_W   , HID_KEY_F                        , HID_KEY_P                          , HID_KEY_G        , HID_KEY_NONE },
     { HID_KEY_EQUAL, HID_KEY_A     , HID_KEY_R   , HID_KEY_S                        , HID_KEY_T                          , HID_KEY_D        , HID_KEY_NONE },
-    { HID_KEY_NONE , HID_KEY_Z     , HID_KEY_X   , HID_KEY_C                        , HID_KEY_V                          , HID_KEY_B        , HID_KEY_DELETE },
+    { FN           , HID_KEY_Z     , HID_KEY_X   , HID_KEY_C                        , HID_KEY_V                          , HID_KEY_B        , HID_KEY_DELETE },
     { HID_KEY_NONE , HID_KEY_ESCAPE, HID_KEY_NONE, MOD(KEYBOARD_MODIFIER_LEFTGUI, 0), MOD(KEYBOARD_MODIFIER_LEFTSHIFT, 0), HID_KEY_BACKSPACE, MT(KEYBOARD_MODIFIER_LEFTCTRL, HID_KEY_TAB) },
     },
     // thumb, inner, index, middle, ring, pinky, outer

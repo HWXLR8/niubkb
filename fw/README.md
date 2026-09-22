@@ -5,7 +5,7 @@ L0
 ```
     ×     Q     W     F     P     G         ||        J     L     U     Y     ;     ×
     =     A     R     S     T     D         ||        H     N     E     I     O     '
-    ×     Z     X     C     V     B    DEL  ||  ×     K     M     ,     .     /     ×
+    FN    Z     X     C     V     B    DEL  ||  ×     K     M     ,     .     /     ×
     ×    ESC    ×    GUI  SHIFT  BSPC  CTRL || ALT  SPACE   FN    -     ×   ENTER   ×
 ```
 
