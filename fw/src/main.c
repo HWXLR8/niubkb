@@ -159,22 +159,24 @@ static void matrix_debounce(const bool raw[NUM_ROWS][NUM_COLS], bool out[NUM_ROW
 
 //// BOOTSEL ESCAPES
 
-// Two independent ways back into the bootloader, needed because the right half's
-// module is mounted inverted and its BOOT button is unreachable:
+// Ways back into the bootloader. The GP7 pin escape is on both halves and is checked
+// at the top of main(), before any init that can block, and stays live afterwards; the
+// pin is additionally polled from a timer IRQ, so it works even if the main loop
+// wedges (e.g. a stalled pio_sm_put_blocking).
 //
-//   1. hold the outer/top key while plugging in, or press it while running
-//   2. pull BOOTSEL_PIN to ground
-//
-// Both are checked at the top of main(), before any init that can block, and both
-// stay live afterwards. The pin is additionally polled from a timer IRQ, so it works
-// even if the main loop wedges (e.g. a stalled pio_sm_put_blocking).
+// The key escape is right-half only: the right's module is mounted inverted and its
+// BOOT button is unreachable, so the switch above its ALT thumb key (thumb-side col 6,
+// row 2) is used instead. The left half keeps its reachable BOOT button plus the GP7
+// pin, so it has no key escape and that switch stays free for normal use.
 //
 // GP7 is MCU pad 16 (net P16) and is unconnected on the PCB, so its through-hole
 // doubles as the test point. Active low: short it to any ground.
 
 #define BOOTSEL_PIN     7
-#define BOOTSEL_KEY_R   0 // top row
-#define BOOTSEL_KEY_C   0 // outer column
+#if HAND == HAND_RIGHT
+#define BOOTSEL_KEY_R   2 // row above the ALT thumb mod-tap
+#define BOOTSEL_KEY_C   6 // thumb-side column
+#endif
 #define BOOTSEL_POLL_MS 20
 
 static void bootsel_pin_init(void) {
@@ -202,7 +204,11 @@ static void bootsel_check_at_boot(void) {
     sleep_ms(1); // let the pull-up settle before the first read
     matrix_scan(state);
 
-    if (bootsel_pin_asserted() || state[BOOTSEL_KEY_R][BOOTSEL_KEY_C])
+    if (bootsel_pin_asserted()
+#if HAND == HAND_RIGHT
+        || state[BOOTSEL_KEY_R][BOOTSEL_KEY_C]
+#endif
+        )
         reset_usb_boot(0, 0);
 }
 
@@ -495,10 +501,12 @@ int main(void) {
         matrix_scan(raw);
         matrix_debounce(raw, state);
 
-        // jump to bootsel if the outer/top key is hit
+        #if HAND == HAND_RIGHT
+        // jump to bootsel if the right-half bootsel key is hit
         if (raw[BOOTSEL_KEY_R][BOOTSEL_KEY_C]) {
           reset_usb_boot(0, 0);
         }
+#endif
 
 #if IS_MASTER
         link_task();
