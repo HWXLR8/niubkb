@@ -314,6 +314,7 @@ enum { MT_IDLE, MT_PENDING, MT_HELD };
 
 static uint8_t  mt_state[2][NUM_ROWS][NUM_COLS] = {0};
 static uint64_t mt_t0[2][NUM_ROWS][NUM_COLS]    = {0};
+static uint64_t press_seq[2][NUM_ROWS][NUM_COLS]= {0};
 static uint8_t  pending_tap                     = 0;
 
 // Entry resolved at press time, so releasing a layer key under a held key cannot
@@ -337,6 +338,7 @@ static void mt_task(int layer, bool local[NUM_ROWS][NUM_COLS],
                 uint32_t e = keymap_at(layer, h, r, c);
                 if (pressed && !prev[h][r][c]) {
                     latch[h][r][c] = e;
+                    press_seq[h][r][c] = now;
                     if (e && !IS_MT(e)) other_pressed = true;
                 }
                 prev[h][r][c] = pressed;
@@ -368,7 +370,7 @@ static void mt_task(int layer, bool local[NUM_ROWS][NUM_COLS],
             }
 }
 
-static void report_add(uint32_t entry, uint8_t state, uint8_t *modifier,
+static void report_add(uint32_t entry, uint8_t state, bool newest, uint8_t *modifier,
                        uint8_t *keycodes, int *idx) {
     if (entry == FN) return; // layer key, never reported
     if (IS_MT(entry)) {
@@ -377,9 +379,15 @@ static void report_add(uint32_t entry, uint8_t state, uint8_t *modifier,
         if (state == MT_HELD) *modifier |= (entry >> 8) & 0xFF;
         return;
     }
-    *modifier |= (entry >> 8) & 0xFF;
+    uint8_t mod = (entry >> 8) & 0xFF;
     uint8_t key = entry & 0xFF;
-    if (key && *idx < 6) keycodes[(*idx)++] = key;
+    // implicit modifier only follows the newest press, so it can't leak onto the next key
+    if (key) {
+        if (mod && newest) *modifier |= mod;
+        if (*idx < 6) keycodes[(*idx)++] = key;
+    } else if (mod) {
+        *modifier |= mod;
+    }
 }
 
 #else
@@ -526,10 +534,24 @@ int main(void) {
 
         mt_task(layer, state, remote_state);
 
+        uint64_t newest_ts = 0; int nh = -1, nr = -1, nc = -1;
+        for (int h = 0; h < 2; h++)
+          for (int r = 0; r < NUM_ROWS; r++)
+            for (int c = 0; c < NUM_COLS; c++) {
+              bool pressed = (h == HAND) ? state[r][c] : remote_state[r][c];
+              if (pressed && press_seq[h][r][c] >= newest_ts) {
+                newest_ts = press_seq[h][r][c]; nh = h; nr = r; nc = c;
+              }
+            }
+
         for (int r = 0; r < NUM_ROWS; r++)
           for (int c = 0; c < NUM_COLS; c++) {
-            if (state[r][c])        report_add(latch[HAND][r][c],  mt_state[HAND][r][c],  &modifier, keycodes, &idx);
-            if (remote_state[r][c]) report_add(latch[!HAND][r][c], mt_state[!HAND][r][c], &modifier, keycodes, &idx);
+            if (state[r][c])        report_add(latch[HAND][r][c],  mt_state[HAND][r][c],
+                                               (HAND == nh && r == nr && c == nc),
+                                               &modifier, keycodes, &idx);
+            if (remote_state[r][c]) report_add(latch[!HAND][r][c], mt_state[!HAND][r][c],
+                                               (!HAND == nh && r == nr && c == nc),
+                                               &modifier, keycodes, &idx);
           }
 
         // one-report pulse; the next report rebuilds without it, which is the release
