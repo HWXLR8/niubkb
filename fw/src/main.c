@@ -68,16 +68,16 @@ static const uint32_t keymap[NUM_LAYERS][2][NUM_ROWS][NUM_COLS] = {
     [0] = {
     // outer, pinky, ring, middle, index, inner, thumb
     [HAND_LEFT] = {
-    { HID_KEY_NONE , HID_KEY_Q     , HID_KEY_W   , HID_KEY_F                        , HID_KEY_P                          , HID_KEY_G        , HID_KEY_NONE },
-    { HID_KEY_EQUAL, HID_KEY_A     , HID_KEY_R   , HID_KEY_S                        , HID_KEY_T                          , HID_KEY_D        , HID_KEY_NONE },
+    { HID_KEY_EQUAL, HID_KEY_Q     , HID_KEY_W   , HID_KEY_F                        , HID_KEY_P                          , HID_KEY_G        , HID_KEY_NONE },
+    { HID_KEY_SLASH, HID_KEY_A     , HID_KEY_R   , HID_KEY_S                        , HID_KEY_T                          , HID_KEY_D        , HID_KEY_NONE },
     { FN           , HID_KEY_Z     , HID_KEY_X   , HID_KEY_C                        , HID_KEY_V                          , HID_KEY_B        , HID_KEY_DELETE },
     { HID_KEY_ESCAPE, HID_KEY_NONE  , HID_KEY_NONE, MOD(KEYBOARD_MODIFIER_LEFTGUI, 0), MOD(KEYBOARD_MODIFIER_LEFTSHIFT, 0), HID_KEY_BACKSPACE, MT(KEYBOARD_MODIFIER_LEFTCTRL, HID_KEY_TAB) },
     },
     // thumb, inner, index, middle, ring, pinky, outer
     [HAND_RIGHT] = {
-    { HID_KEY_NONE                     , HID_KEY_J    , HID_KEY_L, HID_KEY_U    , HID_KEY_Y     , HID_KEY_SEMICOLON, HID_KEY_NONE },
+    { HID_KEY_NONE                     , HID_KEY_J    , HID_KEY_L, HID_KEY_U    , HID_KEY_Y     , HID_KEY_SEMICOLON, HID_KEY_GRAVE },
     { HID_KEY_NONE                     , HID_KEY_H    , HID_KEY_N, HID_KEY_E    , HID_KEY_I     , HID_KEY_O        , HID_KEY_APOSTROPHE },
-    { HID_KEY_NONE                     , HID_KEY_K    , HID_KEY_M, HID_KEY_COMMA, HID_KEY_PERIOD, HID_KEY_SLASH    , HID_KEY_NONE },
+    { HID_KEY_NONE                     , HID_KEY_K    , HID_KEY_M, HID_KEY_COMMA, HID_KEY_PERIOD, HID_KEY_NONE    , HID_KEY_NONE },
     { MT(KEYBOARD_MODIFIER_LEFTALT, HID_KEY_ENTER), HID_KEY_SPACE, FN, HID_KEY_MINUS, HID_KEY_NONE  , HID_KEY_NONE     , HID_KEY_ENTER },
     },
     },
@@ -93,7 +93,7 @@ static const uint32_t keymap[NUM_LAYERS][2][NUM_ROWS][NUM_COLS] = {
     [HAND_RIGHT] = {
     { TRNS                             , HID_KEY_PAGE_UP  , HID_KEY_7, HID_KEY_8     , HID_KEY_9, MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_8)    , TRNS },
     { TRNS                             , HID_KEY_PAGE_DOWN, HID_KEY_4, HID_KEY_5     , HID_KEY_6, MOD(KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_EQUAL), TRNS },
-    { TRNS                             , HID_KEY_GRAVE    , HID_KEY_1, HID_KEY_2     , HID_KEY_3, HID_KEY_BACKSLASH                              , TRNS },
+    { TRNS                             , HID_KEY_NONE   , HID_KEY_1, HID_KEY_2     , HID_KEY_3, HID_KEY_BACKSLASH                              , TRNS },
     { MOD(KEYBOARD_MODIFIER_LEFTALT, 0), HID_KEY_SPACE    , TRNS     , HID_KEY_PERIOD, HID_KEY_0, HID_KEY_EQUAL                                  , TRNS },
     },
     },
